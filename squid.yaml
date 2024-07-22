@@ -7,19 +7,19 @@ deploy:
   addons:
     postgres:
     rpc:
-      - arb.http
-      - bera.http
-      - op.http
+      - arbitrum-one.http
+      # - berachain.http
+      - optimism.http
       - base.http
   processor:
-    - name: arb-processor
-      cmd:
-        - sqd
-        - process:prod:arb
-    - name: berachain-processor
-      cmd:
-        - sqd
-        - process:prod:bera
+    # - name: arb-processor
+    #   cmd:
+    #     - sqd
+    #     - process:prod:arb
+    # - name: berachain-processor
+    #   cmd:
+    #     - sqd
+    #     - process:prod:bera
     - name: optimism-processor
       cmd:
         - sqd

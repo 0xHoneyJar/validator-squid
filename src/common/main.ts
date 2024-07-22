@@ -53,7 +53,7 @@ export function createMain(chain: CHAINS) {
         if (!matchingQuest) continue;
 
         // Check if the log is within the quest's time range
-        const currentTimestamp = block.header.timestamp;
+        const currentTimestamp = Math.floor(block.header.timestamp / 1000);
         if (
           (matchingQuest.startTime &&
             currentTimestamp < matchingQuest.startTime) ||

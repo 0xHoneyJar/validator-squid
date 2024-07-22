@@ -211,5 +211,5 @@ export const ARCHIVE_GATEWAYS = {
   [CHAINS.BASE]: "https://v2.archive.subsquid.io/network/base-mainnet",
   [CHAINS.ARBITRUM]: "https://v2.archive.subsquid.io/network/arbitrum-one",
   [CHAINS.BERACHAIN]: "https://v2.archive.subsquid.io/network/berachain",
-  [CHAINS.OPTIMISM]: "https://v2.archive.subsquid.io/network/optimism",
+  [CHAINS.OPTIMISM]: "https://v2.archive.subsquid.io/network/optimism-mainnet",
 } as const;
