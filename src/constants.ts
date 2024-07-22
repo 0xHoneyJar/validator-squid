@@ -3,12 +3,12 @@ import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
 import * as uniswapAbi from "./abi/uniswap";
 
-export const CHAINS = {
-  BASE: "base",
-  ARBITRUM: "arbitrum",
-  OPTIMISM: "optimism",
-  BERACHAIN: "berachain",
-} as const;
+export enum CHAINS {
+  BASE = "base",
+  ARBITRUM = "arbitrum",
+  OPTIMISM = "optimism",
+  BERACHAIN = "berachain",
+}
 
 export enum QUESTS {
   THJ_101 = "THJ 101",
@@ -20,12 +20,12 @@ export enum QUESTS {
   CLASS_IS_IN_SESSION = "Class Is In Session",
 }
 
-export const QUEST_TYPES = {
-  ERC721_MINT: "ERC721_MINT",
-  ERC1155_MINT: "ERC1155_MINT",
-  ERC20_MINT: "ERC20_MINT",
-  UNISWAP_SWAP: "UNISWAP_SWAP",
-} as const;
+export enum QUEST_TYPES {
+  ERC721_MINT = "ERC721_MINT",
+  ERC1155_MINT = "ERC1155_MINT",
+  ERC20_MINT = "ERC20_MINT",
+  UNISWAP_SWAP = "UNISWAP_SWAP",
+}
 
 export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
 export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
