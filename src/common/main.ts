@@ -1,11 +1,5 @@
 import { CHAINS, QUESTS_CONFIG, QUEST_ABIS, QUEST_TYPES } from "../constants";
-import {
-  Quest,
-  QuestStep,
-  User,
-  UserQuestProgress,
-  UserStepProgress,
-} from "../model";
+import { Quest, QuestStep, User, UserQuestProgress } from "../model";
 import { Context } from "./processorFactory";
 
 export function createMain(chain: CHAINS) {
@@ -36,6 +30,7 @@ export function createMain(chain: CHAINS) {
         questStep.eventName = stepConfig.eventName;
         questStep.filterCriteria = stepConfig.filterCriteria;
         questStep.requiredAmount = stepConfig.requiredAmount || 1;
+        questStep.progressAmount = 0;
         quest.steps.push(questStep);
         questSteps.set(stepId, questStep);
       });
@@ -183,41 +178,30 @@ async function updateUserQuestProgress(
       completed: false,
     });
     quest.totalParticipants += 1;
-    await ctx.store.save(quest);
+    await ctx.store.save(quest); // Save the updated quest
   }
-
-  let userStepProgress = await ctx.store.get(
-    UserStepProgress,
-    `${userAddress}-${quest.id}-${completedStep.id}`
-  );
-
-  if (!userStepProgress) {
-    userStepProgress = new UserStepProgress({
-      id: `${userAddress}-${quest.id}-${completedStep.id}`,
-      userQuestProgress,
-      step: completedStep,
-      progressAmount: 0,
-    });
-  }
-
-  // Ensure amount is a valid number and convert it to an integer
-  const validAmount = Number.isFinite(amount) ? Math.floor(amount) : 0;
-
-  // Add the valid amount to progressAmount
-  userStepProgress.progressAmount += validAmount;
 
   if (userQuestProgress.currentStep + 1 === completedStep.stepNumber) {
-    if (userStepProgress.progressAmount >= completedStep.requiredAmount) {
+    // Ensure amount is a valid number and convert it to an integer
+    const validAmount = Number.isFinite(amount) ? Math.floor(amount) : 0;
+    
+    // Initialize progressAmount to 0 if it's null or NaN
+    completedStep.progressAmount = completedStep.progressAmount || 0;
+    
+    // Add the valid amount to progressAmount
+    completedStep.progressAmount += validAmount;
+
+    if (completedStep.progressAmount >= completedStep.requiredAmount) {
       userQuestProgress.currentStep += 1;
 
       if (userQuestProgress.currentStep === quest.steps.length) {
         userQuestProgress.completed = true;
         quest.totalCompletions += 1;
-        await ctx.store.save(quest);
+        await ctx.store.save(quest); // Save the updated quest
       }
     }
 
-    await ctx.store.save(userStepProgress);
+    await ctx.store.save(completedStep);
     await ctx.store.save(userQuestProgress);
     console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
   }
