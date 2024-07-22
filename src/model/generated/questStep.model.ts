@@ -5,6 +5,7 @@ import {Quest} from "./quest.model"
 export class QuestStep {
     constructor(props?: Partial<QuestStep>) {
         Object.assign(this, props)
+        this.progressAmount = this.progressAmount || 0
     }
 
     @PrimaryColumn_()
@@ -32,9 +33,9 @@ export class QuestStep {
     @JSONColumn_({nullable: true})
     filterCriteria!: unknown | undefined | null
 
-    @IntColumn_({nullable: true})
-    requiredAmount!: number | undefined | null
+    @IntColumn_({nullable: false})
+    requiredAmount!: number
 
-    @IntColumn_({nullable: true})
-    progressAmount!: number | undefined | null
+    @IntColumn_({nullable: false})
+    progressAmount!: number
 }

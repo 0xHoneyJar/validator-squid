@@ -11,30 +11,26 @@ export function createMain(chain: CHAINS) {
     for (const [questName, questConfig] of Object.entries(
       QUESTS_CONFIG[chain]
     )) {
-      const quest = new Quest({
-        id: questName,
-        name: questName,
-        chain: chain,
-        steps: [],
-        startTime: questConfig.startTime,
-        endTime: questConfig.endTime,
-        totalParticipants: 0,
-        totalCompletions: 0,
-      });
+      const quest = new Quest({ id: questName });
+      quest.name = questName;
+      quest.chain = chain;
+      quest.steps = [];
+      quest.startTime = questConfig.startTime;
+      quest.endTime = questConfig.endTime;
+      quest.totalParticipants = 0;
+      quest.totalCompletions = 0;
 
       questConfig.steps.forEach((stepConfig, index) => {
         const stepId = `${questName}-step-${index + 1}`;
-        const questStep = new QuestStep({
-          id: stepId,
-          quest,
-          stepNumber: index + 1,
-          type: stepConfig.type,
-          address: stepConfig.address,
-          eventName: stepConfig.eventName,
-          filterCriteria: stepConfig.filterCriteria,
-          requiredAmount: stepConfig.requiredAmount || 1,
-          progressAmount: 0,
-        });
+        const questStep = new QuestStep({ id: stepId });
+        questStep.quest = quest;
+        questStep.stepNumber = index + 1;
+        questStep.type = stepConfig.type;
+        questStep.address = stepConfig.address;
+        questStep.eventName = stepConfig.eventName;
+        questStep.filterCriteria = stepConfig.filterCriteria;
+        questStep.requiredAmount = stepConfig.requiredAmount || 1;
+        questStep.progressAmount = 0;
         quest.steps.push(questStep);
         questSteps.set(stepId, questStep);
       });
@@ -158,6 +154,9 @@ async function updateUserQuestProgress(
   completedStep: QuestStep,
   amount: number
 ) {
+  // Ensure the Quest is saved first
+  await ctx.store.save(quest);
+
   let user = await ctx.store.get(User, userAddress);
   if (!user) {
     user = new User({ id: userAddress, address: userAddress });
@@ -169,4 +168,41 @@ async function updateUserQuestProgress(
     UserQuestProgress,
     `${userAddress}-${quest.id}`
   );
+
+  if (!userQuestProgress) {
+    userQuestProgress = new UserQuestProgress({
+      id: `${userAddress}-${quest.id}`,
+      user,
+      quest,
+      currentStep: 0,
+      completed: false,
+    });
+    quest.totalParticipants += 1;
+    await ctx.store.save(quest); // Save the updated quest
+  }
+
+  if (userQuestProgress.currentStep + 1 === completedStep.stepNumber) {
+    // Ensure amount is a valid number and convert it to an integer
+    const validAmount = Number.isFinite(amount) ? Math.floor(amount) : 0;
+    
+    // Initialize progressAmount to 0 if it's null or NaN
+    completedStep.progressAmount = completedStep.progressAmount || 0;
+    
+    // Add the valid amount to progressAmount
+    completedStep.progressAmount += validAmount;
+
+    if (completedStep.progressAmount >= completedStep.requiredAmount) {
+      userQuestProgress.currentStep += 1;
+
+      if (userQuestProgress.currentStep === quest.steps.length) {
+        userQuestProgress.completed = true;
+        quest.totalCompletions += 1;
+        await ctx.store.save(quest); // Save the updated quest
+      }
+    }
+
+    await ctx.store.save(completedStep);
+    await ctx.store.save(userQuestProgress);
+    console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
+  }
 }

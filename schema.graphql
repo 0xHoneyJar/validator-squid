@@ -18,8 +18,8 @@ type QuestStep @entity {
   tokenId: BigInt
   eventName: String!
   filterCriteria: JSON
-  requiredAmount: Int # New field
-  progressAmount: Int # New field
+  requiredAmount: Int!
+  progressAmount: Int!
 }
 
 type UserQuestProgress @entity {
