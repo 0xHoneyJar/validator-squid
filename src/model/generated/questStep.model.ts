@@ -31,4 +31,10 @@ export class QuestStep {
 
     @JSONColumn_({nullable: true})
     filterCriteria!: unknown | undefined | null
+
+    @IntColumn_({nullable: true})
+    requiredAmount!: number | undefined | null
+
+    @IntColumn_({nullable: true})
+    progressAmount!: number | undefined | null
 }

@@ -32,6 +32,8 @@ processor.run(new TypeormDatabase(), async (ctx) => {
         address: stepConfig.address,
         eventName: stepConfig.eventName,
         filterCriteria: stepConfig.filterCriteria,
+        requiredAmount: stepConfig.requiredAmount || 1, // Default to 1 if not specified
+        progressAmount: 0,
       });
       quest.steps.push(questStep);
       questSteps.set(stepId, questStep);
@@ -123,12 +125,19 @@ async function handleQuestEvent(
   }
 
   let userAddress: string;
+  let amount: number = 1; // Default to 1 for most event types
 
   switch (step.type) {
     case QUEST_TYPES.ERC721_MINT:
+      userAddress = decodedLog.to.toLowerCase();
+      break;
     case QUEST_TYPES.ERC1155_MINT:
+      userAddress = decodedLog.to.toLowerCase();
+      amount = Number(decodedLog.value); // Use the actual amount for ERC1155
+      break;
     case QUEST_TYPES.ERC20_MINT:
       userAddress = decodedLog.to.toLowerCase();
+      amount = Number(decodedLog.value); // Use the actual amount for ERC20
       break;
     case QUEST_TYPES.UNISWAP_SWAP:
       userAddress = decodedLog.recipient.toLowerCase();
@@ -138,14 +147,15 @@ async function handleQuestEvent(
       return;
   }
 
-  await updateUserQuestProgress(ctx, userAddress, quest, step);
+  await updateUserQuestProgress(ctx, userAddress, quest, step, amount);
 }
 
 async function updateUserQuestProgress(
   ctx: any,
   userAddress: string,
   quest: Quest,
-  completedStep: QuestStep
+  completedStep: QuestStep,
+  amount: number
 ) {
   let user = await ctx.store.get(User, userAddress);
   if (!user) {
@@ -169,12 +179,21 @@ async function updateUserQuestProgress(
     quest.totalParticipants += 1;
   }
 
-  if (userQuestProgress.currentStep + 1 === completedStep.stepNumber) {
-    userQuestProgress.currentStep += 1;
-    if (userQuestProgress.currentStep === quest.steps.length) {
-      userQuestProgress.completed = true;
-      quest.totalCompletions += 1;
+  if (userQuestProgress.currentStep === completedStep.stepNumber - 1) {
+    completedStep.progressAmount = (completedStep.progressAmount || 0) + amount;
+
+    if (
+      completedStep.progressAmount &&
+      completedStep.progressAmount >= (completedStep.requiredAmount || 1)
+    ) {
+      userQuestProgress.currentStep += 1;
+      if (userQuestProgress.currentStep === quest.steps.length) {
+        userQuestProgress.completed = true;
+        quest.totalCompletions += 1;
+      }
     }
+
+    await ctx.store.save(completedStep);
     await ctx.store.save(userQuestProgress);
     console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
 

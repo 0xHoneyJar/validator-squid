@@ -37,6 +37,7 @@ type QuestStepConfig = {
   readonly address: string;
   readonly eventName: string;
   readonly filterCriteria?: Record<string, any>;
+  readonly requiredAmount?: number; // Make requiredAmount optional
 };
 
 type QuestConfig = {
@@ -56,6 +57,16 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          requiredAmount: 1,
+        },
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: BULLAS_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 5,
         },
       ],
       endTime: 1721160000,
@@ -69,6 +80,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1722535200, // Example end time (adjust as needed)
@@ -82,6 +94,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1721757600,
@@ -95,6 +108,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1718554800,
@@ -108,6 +122,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1717690800,
@@ -126,6 +141,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
     },
@@ -137,6 +153,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           type: QUEST_TYPES.UNISWAP_SWAP,
           address: "0x8a960A6e5f224D0a88BaD10463bDAD161b68C144", // Kodiak
           eventName: "Swap",
+          // requiredAmount is omitted, will default to 1
         },
         {
           type: QUEST_TYPES.ERC721_MINT,
@@ -145,6 +162,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
+          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1720461600,

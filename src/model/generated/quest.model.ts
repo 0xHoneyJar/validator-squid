@@ -19,8 +19,8 @@ export class Quest {
     @OneToMany_(() => QuestStep, e => e.quest)
     steps!: QuestStep[]
 
-    @IntColumn_({nullable: false})
-    startTime!: number
+    @IntColumn_({nullable: true})
+    startTime!: number | undefined | null
 
     @IntColumn_({nullable: false})
     endTime!: number
