@@ -1,0 +1,35 @@
+manifestVersion: subsquid.io/v0.1
+name: quest-squid
+version: 1
+description: A squid that indexes USDC transfers on ETH and BSC
+build:
+deploy:
+  addons:
+    postgres:
+    rpc:
+      - arb.http
+      - bera.http
+      - op.http
+      - base.http
+  processor:
+    - name: arb-processor
+      cmd:
+        - sqd
+        - process:prod:arb
+    - name: berachain-processor
+      cmd:
+        - sqd
+        - process:prod:bera
+    - name: optimism-processor
+      cmd:
+        - sqd
+        - process:prod:op
+    - name: base-processor
+      cmd:
+        - sqd
+        - process:prod:base
+
+  api:
+    cmd:
+      - sqd
+      - serve:prod

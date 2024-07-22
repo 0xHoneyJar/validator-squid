@@ -1,0 +1,35 @@
+type Quest @entity {
+  id: ID!
+  name: String!
+  chain: String!
+  steps: [QuestStep!]! @derivedFrom(field: "quest")
+  startTime: Int
+  endTime: Int!
+  totalParticipants: Int!
+  totalCompletions: Int!
+}
+
+type QuestStep @entity {
+  id: ID!
+  quest: Quest!
+  stepNumber: Int!
+  type: String!
+  address: String!
+  tokenId: BigInt
+  eventName: String!
+  filterCriteria: JSON
+}
+
+type UserQuestProgress @entity {
+  id: ID!
+  user: User!
+  quest: Quest!
+  currentStep: Int!
+  completed: Boolean!
+}
+
+type User @entity {
+  id: ID!
+  address: String!
+  questProgresses: [UserQuestProgress!]! @derivedFrom(field: "user")
+}
