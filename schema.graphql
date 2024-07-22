@@ -19,7 +19,6 @@ type QuestStep @entity {
   eventName: String!
   filterCriteria: JSON
   requiredAmount: Int!
-  progressAmount: Int!
 }
 
 type UserQuestProgress @entity {
@@ -28,6 +27,14 @@ type UserQuestProgress @entity {
   quest: Quest!
   currentStep: Int!
   completed: Boolean!
+  stepProgresses: [StepProgress!]! @derivedFrom(field: "userQuestProgress")
+}
+
+type StepProgress @entity {
+  id: ID!
+  userQuestProgress: UserQuestProgress!
+  stepNumber: Int!
+  progressAmount: Int!
 }
 
 type User @entity {

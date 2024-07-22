@@ -202,9 +202,9 @@ export const BLOCK_RANGES = {
 
 export const RPC_ENDPOINTS = {
   [CHAINS.BASE]: process.env.RPC_BASE_HTTP,
-  [CHAINS.ARBITRUM]: process.env.RPC_ARB_HTTP,
+  [CHAINS.ARBITRUM]: process.env.RPC_ARBITRUM_ONE_HTTP,
   [CHAINS.BERACHAIN]: process.env.RPC_BERA_HTTP,
-  [CHAINS.OPTIMISM]: process.env.RPC_OP_HTTP,
+  [CHAINS.OPTIMISM]: process.env.RPC_OPTIMISM_HTTP,
 } as const;
 
 export const ARCHIVE_GATEWAYS = {
