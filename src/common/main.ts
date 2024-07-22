@@ -45,62 +45,71 @@ export function createMain(chain: CHAINS) {
 
     for (let block of ctx.blocks) {
       for (let log of block.logs) {
-        const matchingQuest = Array.from(quests.values()).find((quest) =>
+        const matchingQuests = Array.from(quests.values()).filter((quest) =>
           quest.steps.some(
             (step) => step.address.toLowerCase() === log.address.toLowerCase()
           )
         );
 
-        if (!matchingQuest) continue;
+        for (const matchingQuest of matchingQuests) {
+          // Check if the log is within the quest's time range
+          const currentTimestamp = Math.floor(block.header.timestamp / 1000);
+          if (
+            (matchingQuest.startTime &&
+              currentTimestamp < matchingQuest.startTime) ||
+            (matchingQuest.endTime && currentTimestamp > matchingQuest.endTime)
+          ) {
+            console.log(
+              `Log outside of quest time range for ${matchingQuest.name}`
+            );
+            continue;
+          }
 
-        // Check if the log is within the quest's time range
-        const currentTimestamp = Math.floor(block.header.timestamp / 1000);
-        if (
-          (matchingQuest.startTime &&
-            currentTimestamp < matchingQuest.startTime) ||
-          (matchingQuest.endTime && currentTimestamp > matchingQuest.endTime)
-        ) {
-          console.log(
-            `Log outside of quest time range for ${matchingQuest.name}`
+          const matchingSteps = matchingQuest.steps.filter(
+            (step) => step.address.toLowerCase() === log.address.toLowerCase()
           );
-          continue;
+
+          for (const matchingStep of matchingSteps) {
+            console.log(
+              `Processing log: ${log.address}`,
+              matchingQuest.name,
+              matchingStep.type
+            );
+
+            const questAbi =
+              QUEST_ABIS[matchingStep.type as keyof typeof QUEST_TYPES];
+            const eventName = matchingStep.eventName;
+
+            let decodedLog;
+
+            if (questAbi.abi.events && eventName in questAbi.abi.events) {
+              decodedLog = (
+                questAbi.abi.events[
+                  eventName as keyof typeof questAbi.abi.events
+                ] as any
+              ).decode(log);
+              console.log("Decoded log:", decodedLog);
+            } else {
+              console.log(
+                `Event ${eventName} not found in questAbi.abi.events`
+              );
+              continue;
+            }
+
+            const processed = await handleQuestEvent(
+              ctx,
+              matchingQuest,
+              matchingStep,
+              decodedLog
+            );
+
+            if (processed) {
+              console.log(
+                `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+              );
+            }
+          }
         }
-
-        const matchingStep = matchingQuest.steps.find(
-          (step) => step.address.toLowerCase() === log.address.toLowerCase()
-        );
-
-        if (!matchingStep) continue;
-
-        console.log(
-          `Processing log: ${log.address}`,
-          matchingQuest.name,
-          matchingStep.type
-        );
-
-        const questAbi =
-          QUEST_ABIS[matchingStep.type as keyof typeof QUEST_TYPES];
-        const eventName = matchingStep.eventName;
-
-        let decodedLog;
-
-        if (questAbi.abi.events && eventName in questAbi.abi.events) {
-          decodedLog = (
-            questAbi.abi.events[
-              eventName as keyof typeof questAbi.abi.events
-            ] as any
-          ).decode(log);
-          console.log("Decoded log:", decodedLog);
-        } else {
-          console.log(`Event ${eventName} not found in questAbi.abi.events`);
-          continue;
-        }
-
-        await handleQuestEvent(ctx, matchingQuest, matchingStep, decodedLog);
-
-        console.log(
-          `Processed event: ${eventName} for quest: ${matchingQuest.name}`
-        );
       }
     }
 
@@ -114,14 +123,14 @@ async function handleQuestEvent(
   quest: Quest,
   step: QuestStep,
   decodedLog: any
-) {
+): Promise<boolean> {
   if (step.filterCriteria) {
     for (const [key, value] of Object.entries(step.filterCriteria)) {
       if (decodedLog[key] !== value) {
         console.log(
           `Filter mismatch for ${key}: ${decodedLog[key]} !== ${value}`
         );
-        return;
+        return false;
       }
     }
   }
@@ -135,7 +144,7 @@ async function handleQuestEvent(
       break;
     case QUEST_TYPES.ERC1155_MINT:
       userAddress = decodedLog.to.toLowerCase();
-      amount = Number(decodedLog.value);
+      amount = Number(decodedLog.amount);
       break;
     case QUEST_TYPES.ERC20_MINT:
       userAddress = decodedLog.to.toLowerCase();
@@ -146,10 +155,11 @@ async function handleQuestEvent(
       break;
     default:
       console.log(`Unsupported quest type: ${step.type}`);
-      return;
+      return false;
   }
 
   await updateUserQuestProgress(ctx, userAddress, quest, step, amount);
+  return true;
 }
 
 async function updateUserQuestProgress(
@@ -203,21 +213,26 @@ async function updateUserQuestProgress(
     });
   }
 
-  // Ensure amount is a valid number and convert it to an integer
-  const validAmount = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  
   // Add the valid amount to progressAmount
-  stepProgress.progressAmount += validAmount;
+  stepProgress.progressAmount += amount;
 
   if (stepProgress.progressAmount >= completedStep.requiredAmount) {
-    if (userQuestProgress.currentStep + 1 === completedStep.stepNumber) {
-      userQuestProgress.currentStep += 1;
+    // Mark the step as completed if it wasn't already
+    if (userQuestProgress.currentStep < completedStep.stepNumber) {
+      userQuestProgress.currentStep = completedStep.stepNumber;
+    }
 
-      if (userQuestProgress.currentStep === quest.steps.length) {
-        userQuestProgress.completed = true;
-        quest.totalCompletions += 1;
-        await ctx.store.save(quest);
-      }
+    // Check if all steps are completed
+    const allStepsCompleted = quest.steps.every(async (step) => {
+      const stepProgressId = `${userQuestProgress.id}-step-${step.stepNumber}`;
+      const progress = await ctx.store.get(StepProgress, stepProgressId);
+      return progress && progress.progressAmount >= step.requiredAmount;
+    });
+
+    if (allStepsCompleted) {
+      userQuestProgress.completed = true;
+      quest.totalCompletions += 1;
+      await ctx.store.save(quest);
     }
   }
 
