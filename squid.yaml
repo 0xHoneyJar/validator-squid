@@ -12,10 +12,10 @@ deploy:
       - optimism.http
       - base.http
   processor:
-    # - name: arb-processor
-    #   cmd:
-    #     - sqd
-    #     - process:prod:arb
+    - name: arb-processor
+      cmd:
+        - sqd
+        - process:prod:arb
     # - name: berachain-processor
     #   cmd:
     #     - sqd

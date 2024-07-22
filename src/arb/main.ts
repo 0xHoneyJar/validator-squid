@@ -3,4 +3,9 @@ import { createMain } from "../common/main";
 import { CHAINS } from "../constants";
 import { processor } from "./processor";
 
-processor.run(new TypeormDatabase(), createMain(CHAINS.ARBITRUM));
+processor.run(
+  new TypeormDatabase({
+    stateSchema: CHAINS.ARBITRUM,
+  }),
+  createMain(CHAINS.ARBITRUM)
+);

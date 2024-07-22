@@ -22,8 +22,8 @@ export class Quest {
     @IntColumn_({nullable: true})
     startTime!: number | undefined | null
 
-    @IntColumn_({nullable: false})
-    endTime!: number
+    @IntColumn_({nullable: true})
+    endTime!: number | undefined | null
 
     @IntColumn_({nullable: false})
     totalParticipants!: number

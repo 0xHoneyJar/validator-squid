@@ -135,9 +135,9 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     [QUESTS.THJ_101]: {
       steps: [
         {
-          type: QUEST_TYPES.ERC1155_MINT,
+          type: QUEST_TYPES.ERC721_MINT,
           address: "0x9bc2C48189Ff3865875E4A85AfEb6d6ba848739B",
-          eventName: "TransferSingle",
+          eventName: "Transfer",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },

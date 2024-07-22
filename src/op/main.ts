@@ -3,4 +3,9 @@ import { createMain } from "../common/main";
 import { CHAINS } from "../constants";
 import { processor } from "./processor";
 
-processor.run(new TypeormDatabase(), createMain(CHAINS.OPTIMISM));
+processor.run(
+  new TypeormDatabase({
+    stateSchema: CHAINS.OPTIMISM,
+  }),
+  createMain(CHAINS.OPTIMISM)
+);

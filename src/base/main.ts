@@ -1,6 +1,11 @@
 import { TypeormDatabase } from "@subsquid/typeorm-store";
 import { createMain } from "../common/main";
-import { processor } from "./processor";
 import { CHAINS } from "../constants";
+import { processor } from "./processor";
 
-processor.run(new TypeormDatabase(), createMain(CHAINS.BASE));
+processor.run(
+  new TypeormDatabase({
+    stateSchema: CHAINS.BASE,
+  }),
+  createMain(CHAINS.BASE)
+);
