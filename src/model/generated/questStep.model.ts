@@ -5,7 +5,6 @@ import {Quest} from "./quest.model"
 export class QuestStep {
     constructor(props?: Partial<QuestStep>) {
         Object.assign(this, props)
-        this.progressAmount = this.progressAmount || 0
     }
 
     @PrimaryColumn_()
@@ -35,7 +34,4 @@ export class QuestStep {
 
     @IntColumn_({nullable: false})
     requiredAmount!: number
-
-    @IntColumn_({nullable: false})
-    progressAmount!: number
 }
