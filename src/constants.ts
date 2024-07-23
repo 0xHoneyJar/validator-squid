@@ -83,7 +83,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           // requiredAmount is omitted, will default to 1
         },
       ],
-      endTime: 1722535200, // Example end time (adjust as needed)
+      endTime: 1722880800, // Example end time (adjust as needed)
     },
     [QUESTS.CLASS_IS_IN_SESSION]: {
       steps: [
@@ -97,7 +97,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           // requiredAmount is omitted, will default to 1
         },
       ],
-      endTime: 1721757600,
+      endTime: 1722103200,
     },
     [QUESTS.HENLO_6_9]: {
       steps: [
