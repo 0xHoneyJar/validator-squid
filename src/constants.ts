@@ -80,7 +80,16 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
+          requiredAmount: 1,
+        },
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: EGGS_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 10,
         },
       ],
       endTime: 1722880800, // Example end time (adjust as needed)
