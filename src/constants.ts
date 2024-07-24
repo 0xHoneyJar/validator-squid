@@ -18,6 +18,7 @@ export enum QUESTS {
   JANI_LOVE_EGGS = "Jani Love Eggs",
   RUN_IT_BACK_TURBO = "Run It Back Turbo",
   CLASS_IS_IN_SESSION = "Class Is In Session",
+  ZORB_MANIA = "Zorb Mania",
 }
 
 export enum QUEST_TYPES {
@@ -31,6 +32,7 @@ export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
 export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
 export const EGGS_ADDRESS = "0x30b8c95a6e7170a1322453b47722f10fea185b0f";
 export const HOOK_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
+export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
 
 type QuestStepConfig = {
   readonly type: string;
@@ -135,6 +137,29 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         },
       ],
       endTime: 1717690800,
+    },
+    [QUESTS.ZORB_MANIA]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: ZORB_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 1,
+        },
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: ZORB_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 3,
+        },
+      ],
+      endTime: 1722183600,
     },
   },
   [CHAINS.ARBITRUM]: {

@@ -1,8 +1,8 @@
 import {
-  EvmBatchProcessor,
-  EvmBatchProcessorFields,
   BlockHeader,
   DataHandlerContext,
+  EvmBatchProcessor,
+  EvmBatchProcessorFields,
   Log as _Log,
   Transaction as _Transaction,
 } from "@subsquid/evm-processor";
@@ -29,7 +29,6 @@ export function createProcessor(chain: CHAINS) {
     .setGateway(ARCHIVE_GATEWAYS[chain])
     .setRpcEndpoint({
       url: assertNotNull(RPC_ENDPOINTS[chain], "No RPC endpoint supplied"),
-      rateLimit: 10,
     })
     .setFinalityConfirmation(75)
     .setFields({
@@ -51,7 +50,9 @@ export function createProcessor(chain: CHAINS) {
   return processor;
 }
 
-export type Fields = EvmBatchProcessorFields<ReturnType<typeof createProcessor>>;
+export type Fields = EvmBatchProcessorFields<
+  ReturnType<typeof createProcessor>
+>;
 export type Context = DataHandlerContext<Store, Fields>;
 export type Block = BlockHeader<Fields>;
 export type Log = _Log<Fields>;
