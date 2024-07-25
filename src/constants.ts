@@ -8,6 +8,7 @@ export enum CHAINS {
   ARBITRUM = "arbitrum",
   OPTIMISM = "optimism",
   BERACHAIN = "berachain",
+  ZORA = "zora",
 }
 
 export enum QUESTS {
@@ -138,29 +139,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
       ],
       endTime: 1717690800,
     },
-    [QUESTS.ZORB_MANIA]: {
-      steps: [
-        {
-          type: QUEST_TYPES.ERC1155_MINT,
-          address: ZORB_ADDRESS,
-          eventName: "TransferSingle",
-          filterCriteria: {
-            from: "0x0000000000000000000000000000000000000000",
-          },
-          requiredAmount: 1,
-        },
-        {
-          type: QUEST_TYPES.ERC1155_MINT,
-          address: ZORB_ADDRESS,
-          eventName: "TransferSingle",
-          filterCriteria: {
-            from: "0x0000000000000000000000000000000000000000",
-          },
-          requiredAmount: 3,
-        },
-      ],
-      endTime: 1722183600,
-    },
   },
   [CHAINS.ARBITRUM]: {
     // Add Arbitrum quests here if needed
@@ -202,6 +180,31 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
       endTime: 1720461600,
     },
   },
+  [CHAINS.ZORA]: {
+    [QUESTS.ZORB_MANIA]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: ZORB_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 1,
+        },
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: ZORB_ADDRESS,
+          eventName: "TransferSingle",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          requiredAmount: 3,
+        },
+      ],
+      endTime: 1722183600,
+    },
+  },
 } as const;
 
 export const QUEST_ABIS: Record<keyof typeof QUEST_TYPES, { abi: any }> = {
@@ -232,6 +235,9 @@ export const BLOCK_RANGES = {
   [CHAINS.OPTIMISM]: {
     from: 120304396,
   },
+  [CHAINS.ZORA]: {
+    from: 15591949,
+  },
 } as const;
 
 export const RPC_ENDPOINTS = {
@@ -239,6 +245,7 @@ export const RPC_ENDPOINTS = {
   [CHAINS.ARBITRUM]: process.env.RPC_ARBITRUM_ONE_HTTP,
   [CHAINS.BERACHAIN]: process.env.RPC_BERA_HTTP,
   [CHAINS.OPTIMISM]: process.env.RPC_OPTIMISM_HTTP,
+  [CHAINS.ZORA]: process.env.RPC_ZORA_HTTP,
 } as const;
 
 export const ARCHIVE_GATEWAYS = {
@@ -246,4 +253,5 @@ export const ARCHIVE_GATEWAYS = {
   [CHAINS.ARBITRUM]: "https://v2.archive.subsquid.io/network/arbitrum-one",
   [CHAINS.BERACHAIN]: "https://v2.archive.subsquid.io/network/berachain",
   [CHAINS.OPTIMISM]: "https://v2.archive.subsquid.io/network/optimism-mainnet",
+  [CHAINS.ZORA]: "https://v2.archive.subsquid.io/network/zora-mainnet",
 } as const;

@@ -39,6 +39,5 @@ type StepProgress @entity {
 
 type User @entity {
   id: ID!
-  address: String!
   questProgresses: [UserQuestProgress!]! @derivedFrom(field: "user")
 }

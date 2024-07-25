@@ -59,9 +59,9 @@ export function createMain(chain: CHAINS) {
               currentTimestamp < matchingQuest.startTime) ||
             (matchingQuest.endTime && currentTimestamp > matchingQuest.endTime)
           ) {
-            console.log(
-              `Log outside of quest time range for ${matchingQuest.name}`
-            );
+            // console.log(
+            //   `Log outside of quest time range for ${matchingQuest.name}`
+            // );
             continue;
           }
 
@@ -70,11 +70,11 @@ export function createMain(chain: CHAINS) {
           );
 
           for (const matchingStep of matchingSteps) {
-            console.log(
-              `Processing log: ${log.address}`,
-              matchingQuest.name,
-              matchingStep.type
-            );
+            // console.log(
+            //   `Processing log: ${log.address}`,
+            //   matchingQuest.name,
+            //   matchingStep.type
+            // );
 
             const questAbi =
               QUEST_ABIS[matchingStep.type as keyof typeof QUEST_TYPES];
@@ -88,11 +88,11 @@ export function createMain(chain: CHAINS) {
                   eventName as keyof typeof questAbi.abi.events
                 ] as any
               ).decode(log);
-              console.log("Decoded log:", decodedLog);
+              // console.log("Decoded log:", decodedLog);
             } else {
-              console.log(
-                `Event ${eventName} not found in questAbi.abi.events`
-              );
+              // console.log(
+              //   `Event ${eventName} not found in questAbi.abi.events`
+              // );
               continue;
             }
 
@@ -104,9 +104,9 @@ export function createMain(chain: CHAINS) {
             );
 
             if (processed) {
-              console.log(
-                `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-              );
+              // console.log(
+              //   `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+              // );
             }
           }
         }
@@ -127,9 +127,9 @@ async function handleQuestEvent(
   if (step.filterCriteria) {
     for (const [key, value] of Object.entries(step.filterCriteria)) {
       if (decodedLog[key] !== value) {
-        console.log(
-          `Filter mismatch for ${key}: ${decodedLog[key]} !== ${value}`
-        );
+        // console.log(
+        //   `Filter mismatch for ${key}: ${decodedLog[key]} !== ${value}`
+        // );
         return false;
       }
     }
@@ -154,7 +154,7 @@ async function handleQuestEvent(
       userAddress = decodedLog.recipient.toLowerCase();
       break;
     default:
-      console.log(`Unsupported quest type: ${step.type}`);
+      // console.log(`Unsupported quest type: ${step.type}`);
       return false;
   }
 
@@ -174,9 +174,9 @@ async function updateUserQuestProgress(
 
   let user = await ctx.store.get(User, userAddress);
   if (!user) {
-    user = new User({ id: userAddress, address: userAddress });
+    user = new User({ id: userAddress });
     await ctx.store.save(user);
-    console.log(`Created new user: ${userAddress}`);
+    // console.log(`Created new user: ${userAddress}`);
   }
 
   let userQuestProgress = await ctx.store.get(
@@ -238,5 +238,5 @@ async function updateUserQuestProgress(
 
   await ctx.store.save(stepProgress);
   await ctx.store.save(userQuestProgress);
-  console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
+  // console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
 }

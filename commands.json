@@ -90,6 +90,11 @@
       "cmd": ["node", "lib/op/main.js"],
       "hidden": true
     },
+    "process:prod:zora": {
+      "description": "Start the squid processor",
+      "cmd": ["node", "lib/zora/main.js"],
+      "hidden": true
+    },
     "serve": {
       "description": "Start the GraphQL API server",
       "cmd": ["squid-graphql-server"]

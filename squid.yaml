@@ -1,9 +1,11 @@
 manifestVersion: subsquid.io/v0.1
 name: quest-squid
-version: 4
+version: 5
 description: A squid that indexes quest events for Cub Scouts
 build:
 deploy:
+  env:
+    RPC_ZORA_HTTP: ${{ secrets.RPC_ZORA_HTTP }}
   addons:
     postgres:
     rpc:
@@ -28,7 +30,10 @@ deploy:
       cmd:
         - sqd
         - process:prod:base
-
+    - name: zora-processor
+      cmd:
+        - sqd
+        - process:prod:zora
   api:
     cmd:
       - sqd
