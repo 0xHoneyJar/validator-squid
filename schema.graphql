@@ -18,12 +18,12 @@ type QuestStep @entity {
   tokenId: BigInt
   eventName: String!
   filterCriteria: JSON
-  requiredAmount: Int!
+  requiredAmount: BigInt!
 }
 
 type UserQuestProgress @entity {
   id: ID!
-  user: User!
+  address: String!
   quest: Quest!
   currentStep: Int!
   completed: Boolean!
@@ -34,10 +34,5 @@ type StepProgress @entity {
   id: ID!
   userQuestProgress: UserQuestProgress!
   stepNumber: Int!
-  progressAmount: Int!
-}
-
-type User @entity {
-  id: ID!
-  questProgresses: [UserQuestProgress!]! @derivedFrom(field: "user")
+  progressAmount: BigInt!
 }

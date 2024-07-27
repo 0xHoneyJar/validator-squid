@@ -8,9 +8,11 @@ import {
 } from "@subsquid/evm-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { assertNotNull } from "@subsquid/util-internal";
+import * as boogaBearsAbi from "../abi/boogaBears";
 import * as erc1155Abi from "../abi/erc1155";
 import * as erc20Abi from "../abi/erc20";
 import * as erc721Abi from "../abi/erc721";
+import * as hookVaultAbi from "../abi/hookVault";
 import * as uniswapAbi from "../abi/uniswap";
 import {
   ARCHIVE_GATEWAYS,
@@ -44,6 +46,8 @@ export function createProcessor(chain: CHAINS) {
         erc721Abi.events.Transfer.topic,
         erc1155Abi.events.TransferSingle.topic,
         uniswapAbi.events.Swap.topic,
+        hookVaultAbi.events.TokensDeposited.topic,
+        boogaBearsAbi.events.TokensMinted.topic,
       ],
     });
 

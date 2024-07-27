@@ -6,6 +6,7 @@ import { processor } from "./processor";
 processor.run(
   new TypeormDatabase({
     stateSchema: CHAINS.ZORA,
+    isolationLevel: "READ COMMITTED",
   }),
   createMain(CHAINS.ZORA)
 );

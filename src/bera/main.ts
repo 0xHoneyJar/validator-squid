@@ -6,6 +6,7 @@ import { processor } from "./processor";
 processor.run(
   new TypeormDatabase({
     stateSchema: CHAINS.BERACHAIN,
+    isolationLevel: "READ COMMITTED",
   }),
   createMain(CHAINS.BERACHAIN)
 );

@@ -1,11 +1,5 @@
 import { CHAINS, QUESTS_CONFIG, QUEST_ABIS, QUEST_TYPES } from "../constants";
-import {
-  Quest,
-  QuestStep,
-  StepProgress,
-  User,
-  UserQuestProgress,
-} from "../model";
+import { Quest, QuestStep, StepProgress, UserQuestProgress } from "../model";
 import { Context } from "./processorFactory";
 
 export function createMain(chain: CHAINS) {
@@ -35,7 +29,7 @@ export function createMain(chain: CHAINS) {
         questStep.address = stepConfig.address;
         questStep.eventName = stepConfig.eventName;
         questStep.filterCriteria = stepConfig.filterCriteria;
-        questStep.requiredAmount = stepConfig.requiredAmount || 1;
+        questStep.requiredAmount = stepConfig.requiredAmount || 1n;
         quest.steps.push(questStep);
         questSteps.set(stepId, questStep);
       });
@@ -136,7 +130,7 @@ async function handleQuestEvent(
   }
 
   let userAddress: string;
-  let amount: number = 1;
+  let amount: bigint = 1n;
 
   switch (step.type) {
     case QUEST_TYPES.ERC721_MINT:
@@ -144,14 +138,22 @@ async function handleQuestEvent(
       break;
     case QUEST_TYPES.ERC1155_MINT:
       userAddress = decodedLog.to.toLowerCase();
-      amount = Number(decodedLog.amount);
+      amount = decodedLog.amount;
       break;
     case QUEST_TYPES.ERC20_MINT:
       userAddress = decodedLog.to.toLowerCase();
-      amount = Number(decodedLog.value);
+      amount = decodedLog.value;
       break;
     case QUEST_TYPES.UNISWAP_SWAP:
       userAddress = decodedLog.recipient.toLowerCase();
+      break;
+    case QUEST_TYPES.TOKENS_MINTED:
+      userAddress = decodedLog.recipient.toLowerCase();
+      amount = decodedLog.amount;
+      break;
+    case QUEST_TYPES.TOKENS_DEPOSITED:
+      userAddress = decodedLog.depositor.toLowerCase();
+      amount = decodedLog.depositAmount;
       break;
     default:
       // console.log(`Unsupported quest type: ${step.type}`);
@@ -167,17 +169,17 @@ async function updateUserQuestProgress(
   userAddress: string,
   quest: Quest,
   completedStep: QuestStep,
-  amount: number
+  amount: bigint
 ) {
   // Ensure the Quest is saved first
   await ctx.store.save(quest);
 
-  let user = await ctx.store.get(User, userAddress);
-  if (!user) {
-    user = new User({ id: userAddress });
-    await ctx.store.save(user);
-    // console.log(`Created new user: ${userAddress}`);
-  }
+  // let user = await ctx.store.get(User, userAddress);
+  // if (!user) {
+  //   user = new User({ id: userAddress });
+  //   await ctx.store.upsert(user);
+  //   // console.log(`Created new user: ${userAddress}`);
+  // }
 
   let userQuestProgress = await ctx.store.get(
     UserQuestProgress,
@@ -187,7 +189,7 @@ async function updateUserQuestProgress(
   if (!userQuestProgress) {
     userQuestProgress = new UserQuestProgress({
       id: `${userAddress}-${quest.id}`,
-      user,
+      address: userAddress,
       quest,
       currentStep: 0,
       completed: false,
@@ -209,7 +211,7 @@ async function updateUserQuestProgress(
       id: `${userQuestProgress.id}-step-${completedStep.stepNumber}`,
       userQuestProgress,
       stepNumber: completedStep.stepNumber,
-      progressAmount: 0,
+      progressAmount: 0n,
     });
   }
 
@@ -217,6 +219,13 @@ async function updateUserQuestProgress(
   stepProgress.progressAmount += amount;
 
   if (stepProgress.progressAmount >= completedStep.requiredAmount) {
+    // For TOKENS_DEPOSITED, we need to check if the amount is at least the required amount
+    if (completedStep.type === QUEST_TYPES.TOKENS_DEPOSITED) {
+      if (amount < completedStep.requiredAmount) {
+        return; // Exit if the deposited amount is less than required
+      }
+    }
+
     // Mark the step as completed if it wasn't already
     if (userQuestProgress.currentStep < completedStep.stepNumber) {
       userQuestProgress.currentStep = completedStep.stepNumber;

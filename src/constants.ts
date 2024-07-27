@@ -1,6 +1,9 @@
+import { parseEther } from "viem";
+import * as boogaBearsAbi from "./abi/boogaBears";
 import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
+import * as hookVaultAbi from "./abi/hookVault";
 import * as uniswapAbi from "./abi/uniswap";
 
 export enum CHAINS {
@@ -12,6 +15,9 @@ export enum CHAINS {
 }
 
 export enum QUESTS {
+  HONEY_HOOKS_AND_CUTLASSES = "Honey Hooks and Cutlasses",
+  HONEYCOMB_HERITAGE = "Honeycomb Heritage",
+  PROOF_OF_BOOGA = "Proof of Booga",
   THJ_101 = "THJ 101",
   OURS_DE_LA_RENAISSANCE = "Ours de la Renaissance",
   THE_REVENGE_OF_THE_BULLAS = "The Revenge of the Bullas",
@@ -27,20 +33,24 @@ export enum QUEST_TYPES {
   ERC1155_MINT = "ERC1155_MINT",
   ERC20_MINT = "ERC20_MINT",
   UNISWAP_SWAP = "UNISWAP_SWAP",
+  TOKENS_MINTED = "TOKENS_MINTED",
+  TOKENS_DEPOSITED = "TOKENS_DEPOSITED",
 }
 
 export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
 export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
 export const EGGS_ADDRESS = "0x30b8c95a6e7170a1322453b47722f10fea185b0f";
-export const HOOK_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
+export const HOOKED_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
 export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
+export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
+export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
 
 type QuestStepConfig = {
   readonly type: string;
   readonly address: string;
   readonly eventName: string;
   readonly filterCriteria?: Record<string, any>;
-  readonly requiredAmount?: number; // Make requiredAmount optional
+  readonly requiredAmount?: bigint; // Make requiredAmount optional
 };
 
 type QuestConfig = {
@@ -51,6 +61,16 @@ type QuestConfig = {
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BASE]: {
+    [QUESTS.HONEY_HOOKS_AND_CUTLASSES]: {
+      steps: [
+        {
+          type: QUEST_TYPES.TOKENS_DEPOSITED,
+          address: HOOK_VAULT_ADDRESS,
+          eventName: "TokenDeposit",
+          requiredAmount: parseEther("0.025"), // ETH
+        },
+      ],
+    },
     [QUESTS.THE_REVENGE_OF_THE_BULLAS]: {
       steps: [
         {
@@ -60,7 +80,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 1,
+          requiredAmount: 1n,
         },
         {
           type: QUEST_TYPES.ERC1155_MINT,
@@ -69,7 +89,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 5,
+          requiredAmount: 5n,
         },
       ],
       endTime: 1721160000,
@@ -83,7 +103,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 1,
+          requiredAmount: 1n,
         },
         {
           type: QUEST_TYPES.ERC1155_MINT,
@@ -92,7 +112,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 10,
+          requiredAmount: 10n,
         },
       ],
       endTime: 1722880800, // Example end time (adjust as needed)
@@ -101,7 +121,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
       steps: [
         {
           type: QUEST_TYPES.ERC1155_MINT,
-          address: HOOK_ADDRESS,
+          address: HOOKED_ADDRESS,
           eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
@@ -141,7 +161,16 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     },
   },
   [CHAINS.ARBITRUM]: {
-    // Add Arbitrum quests here if needed
+    [QUESTS.PROOF_OF_BOOGA]: {
+      steps: [
+        {
+          type: QUEST_TYPES.TOKENS_MINTED,
+          address: BOOGA_BEARS_ADDRESS,
+          eventName: "TokenMinted",
+          requiredAmount: 1n,
+        },
+      ],
+    },
   },
   [CHAINS.OPTIMISM]: {
     [QUESTS.THJ_101]: {
@@ -190,7 +219,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 1,
+          requiredAmount: 1n,
         },
         {
           type: QUEST_TYPES.ERC1155_MINT,
@@ -199,7 +228,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          requiredAmount: 3,
+          requiredAmount: 3n,
         },
       ],
       endTime: 1722183600,
@@ -219,6 +248,12 @@ export const QUEST_ABIS: Record<keyof typeof QUEST_TYPES, { abi: any }> = {
   },
   [QUEST_TYPES.UNISWAP_SWAP]: {
     abi: uniswapAbi,
+  },
+  [QUEST_TYPES.TOKENS_MINTED]: {
+    abi: boogaBearsAbi,
+  },
+  [QUEST_TYPES.TOKENS_DEPOSITED]: {
+    abi: hookVaultAbi,
   },
 };
 

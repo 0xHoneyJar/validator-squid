@@ -32,6 +32,6 @@ export class QuestStep {
     @JSONColumn_({nullable: true})
     filterCriteria!: unknown | undefined | null
 
-    @IntColumn_({nullable: false})
-    requiredAmount!: number
+    @BigIntColumn_({nullable: false})
+    requiredAmount!: bigint
 }

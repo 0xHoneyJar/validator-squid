@@ -1,5 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_, IntColumn as IntColumn_, BooleanColumn as BooleanColumn_, OneToMany as OneToMany_} from "@subsquid/typeorm-store"
-import {User} from "./user.model"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, StringColumn as StringColumn_, ManyToOne as ManyToOne_, Index as Index_, IntColumn as IntColumn_, BooleanColumn as BooleanColumn_, OneToMany as OneToMany_} from "@subsquid/typeorm-store"
 import {Quest} from "./quest.model"
 import {StepProgress} from "./stepProgress.model"
 
@@ -12,9 +11,8 @@ export class UserQuestProgress {
     @PrimaryColumn_()
     id!: string
 
-    @Index_()
-    @ManyToOne_(() => User, {nullable: true})
-    user!: User
+    @StringColumn_({nullable: false})
+    address!: string
 
     @Index_()
     @ManyToOne_(() => Quest, {nullable: true})
