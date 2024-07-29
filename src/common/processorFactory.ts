@@ -8,24 +8,36 @@ import {
 } from "@subsquid/evm-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { assertNotNull } from "@subsquid/util-internal";
-import * as boogaBearsAbi from "../abi/boogaBears";
-import * as erc1155Abi from "../abi/erc1155";
-import * as erc20Abi from "../abi/erc20";
-import * as erc721Abi from "../abi/erc721";
-import * as hookVaultAbi from "../abi/hookVault";
-import * as uniswapAbi from "../abi/uniswap";
 import {
   ARCHIVE_GATEWAYS,
   BLOCK_RANGES,
   CHAINS,
   QUESTS_CONFIG,
+  QUEST_TYPES,
+  QUEST_TYPE_INFO,
   RPC_ENDPOINTS,
 } from "../constants";
 
 export function createProcessor(chain: CHAINS) {
-  const QUEST_ADDRESSES = Object.values(QUESTS_CONFIG[chain])
-    .flatMap((quest) => quest.steps.map((step) => step.address.toLowerCase()))
-    .filter((value, index, self) => self.indexOf(value) === index);
+  const questConfig = QUESTS_CONFIG[chain];
+  const addressToTopics: Record<string, string[]> = {};
+
+  // Collect relevant addresses and topics
+  for (const quest of Object.values(questConfig)) {
+    for (const step of quest.steps) {
+      const address = step.address.toLowerCase();
+      if (!addressToTopics[address]) {
+        addressToTopics[address] = [];
+      }
+
+      const questTypeInfo = QUEST_TYPE_INFO[step.type as QUEST_TYPES];
+      const topic = questTypeInfo.abi.events[questTypeInfo.eventName].topic;
+
+      if (!addressToTopics[address].includes(topic)) {
+        addressToTopics[address].push(topic);
+      }
+    }
+  }
 
   const processor = new EvmBatchProcessor()
     .setGateway(ARCHIVE_GATEWAYS[chain])
@@ -38,19 +50,15 @@ export function createProcessor(chain: CHAINS) {
         transactionHash: true,
       },
     })
-    .setBlockRange({ from: BLOCK_RANGES[chain].from })
-    .addLog({
-      address: QUEST_ADDRESSES,
-      topic0: [
-        erc20Abi.events.Transfer.topic,
-        erc721Abi.events.Transfer.topic,
-        erc1155Abi.events.TransferSingle.topic,
-        uniswapAbi.events.Swap.topic,
-        hookVaultAbi.events.TokensDeposited.topic,
-        boogaBearsAbi.events.TokensMinted.topic,
-        uniswapAbi.events.Mint.topic,
-      ],
+    .setBlockRange({ from: BLOCK_RANGES[chain].from });
+
+  // Add logs for each address with its specific topics
+  for (const [address, topics] of Object.entries(addressToTopics)) {
+    processor.addLog({
+      address: [address],
+      topic0: topics,
     });
+  }
 
   return processor;
 }

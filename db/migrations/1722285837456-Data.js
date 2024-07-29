@@ -1,8 +1,8 @@
-module.exports = class Data1722120314529 {
-    name = 'Data1722120314529'
+module.exports = class Data1722285837456 {
+    name = 'Data1722285837456'
 
     async up(db) {
-        await db.query(`CREATE TABLE "quest_step" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "type" text NOT NULL, "address" text NOT NULL, "token_id" numeric, "event_name" text NOT NULL, "filter_criteria" jsonb, "required_amount" numeric NOT NULL, "quest_id" character varying, CONSTRAINT "PK_2701eac9024314902255b9efaf7" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "quest_step" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "type" text NOT NULL, "address" text NOT NULL, "token_id" numeric, "filter_criteria" jsonb, "required_amount" numeric NOT NULL, "quest_id" character varying, CONSTRAINT "PK_2701eac9024314902255b9efaf7" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_9dc3e0b37118e6c7035a54d9d9" ON "quest_step" ("quest_id") `)
         await db.query(`CREATE TABLE "quest" ("id" character varying NOT NULL, "name" text NOT NULL, "chain" text NOT NULL, "start_time" integer, "end_time" integer, "total_participants" integer NOT NULL, "total_completions" integer NOT NULL, CONSTRAINT "PK_0d6873502a58302d2ae0b82631c" PRIMARY KEY ("id"))`)
         await db.query(`CREATE TABLE "step_progress" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "progress_amount" numeric NOT NULL, "user_quest_progress_id" character varying, CONSTRAINT "PK_4a0d11758626d75e36814ab7459" PRIMARY KEY ("id"))`)

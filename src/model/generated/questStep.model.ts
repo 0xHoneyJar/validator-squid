@@ -26,9 +26,6 @@ export class QuestStep {
     @BigIntColumn_({nullable: true})
     tokenId!: bigint | undefined | null
 
-    @StringColumn_({nullable: false})
-    eventName!: string
-
     @JSONColumn_({nullable: true})
     filterCriteria!: unknown | undefined | null
 

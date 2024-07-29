@@ -1,4 +1,10 @@
-import { CHAINS, QUESTS_CONFIG, QUEST_ABIS, QUEST_TYPES } from "../constants";
+import { AbiEvent } from "@subsquid/evm-abi";
+import {
+  CHAINS,
+  QUESTS_CONFIG,
+  QUEST_TYPES,
+  QUEST_TYPE_INFO,
+} from "../constants";
 import { Quest, QuestStep, StepProgress, UserQuestProgress } from "../model";
 import { Context } from "./processorFactory";
 
@@ -27,7 +33,6 @@ export function createMain(chain: CHAINS) {
         questStep.stepNumber = index + 1;
         questStep.type = stepConfig.type;
         questStep.address = stepConfig.address;
-        questStep.eventName = stepConfig.eventName;
         questStep.filterCriteria = stepConfig.filterCriteria;
         questStep.requiredAmount = stepConfig.requiredAmount || 1n;
         quest.steps.push(questStep);
@@ -64,34 +69,19 @@ export function createMain(chain: CHAINS) {
           );
 
           for (const matchingStep of matchingSteps) {
-            // console.log(
-            //   `Processing log: ${log.address}`,
-            //   matchingQuest.name,
-            //   matchingStep.type
-            // );
-
-            const questAbi =
-              QUEST_ABIS[matchingStep.type as keyof typeof QUEST_TYPES];
-            const eventName = matchingStep.eventName;
+            const questTypeInfo =
+              QUEST_TYPE_INFO[matchingStep.type as QUEST_TYPES];
+            const { abi, eventName } = questTypeInfo;
 
             let decodedLog;
 
-            if (questAbi.abi.events && eventName in questAbi.abi.events) {
-              if (chain === CHAINS.BERACHAIN) {
-              }
-              try {
-                decodedLog = (
-                  questAbi.abi.events[
-                    eventName as keyof typeof questAbi.abi.events
-                  ] as any
-                ).decode(log);
-              } catch (error) {
-                continue;
+            if (abi.events && eventName in abi.events) {
+              const event = abi.events[eventName] as AbiEvent<any>;
+              if (event.is(log)) {
+                decodedLog = event.decode(log);
               }
             } else {
-              console.log(
-                `Event ${eventName} not found in questAbi.abi.events`
-              );
+              console.log(`Event ${eventName} not found in abi.events`);
               continue;
             }
 
@@ -139,21 +129,17 @@ async function handleQuestEvent(
 
   switch (step.type) {
     case QUEST_TYPES.ERC721_MINT:
+    case QUEST_TYPES.ERC20_MINT:
+    case QUEST_TYPES.UNISWAP_MINT:
       userAddress = decodedLog.to.toLowerCase();
+      if (step.type === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
       break;
     case QUEST_TYPES.ERC1155_MINT:
       userAddress = decodedLog.to.toLowerCase();
       amount = decodedLog.amount;
       break;
-    case QUEST_TYPES.ERC20_MINT:
-      userAddress = decodedLog.to.toLowerCase();
-      amount = decodedLog.value;
-      break;
     case QUEST_TYPES.UNISWAP_SWAP:
       userAddress = decodedLog.recipient.toLowerCase();
-      break;
-    case QUEST_TYPES.UNISWAP_MINT:
-      userAddress = decodedLog.to.toLowerCase();
       break;
     case QUEST_TYPES.TOKENS_MINTED:
       userAddress = decodedLog.recipient.toLowerCase();
@@ -164,7 +150,7 @@ async function handleQuestEvent(
       amount = decodedLog.depositAmount;
       break;
     default:
-      // console.log(`Unsupported quest type: ${step.type}`);
+      console.log(`Unsupported quest type: ${step.type}`);
       return false;
   }
 

@@ -1,3 +1,4 @@
+import { AbiEvent } from "@subsquid/evm-abi";
 import { parseEther, zeroAddress } from "viem";
 import * as boogaBearsAbi from "./abi/boogaBears";
 import * as erc1155Abi from "./abi/erc1155";
@@ -40,6 +41,46 @@ export enum QUEST_TYPES {
   UNISWAP_MINT = "UNISWAP_MINT",
 }
 
+type AbiWithEvents = {
+  events: {
+    [eventName: string]: AbiEvent<any>;
+  };
+};
+
+export const QUEST_TYPE_INFO: Record<
+  QUEST_TYPES,
+  { eventName: string; abi: AbiWithEvents }
+> = {
+  [QUEST_TYPES.ERC721_MINT]: {
+    eventName: "Transfer",
+    abi: erc721Abi,
+  },
+  [QUEST_TYPES.ERC1155_MINT]: {
+    eventName: "TransferSingle",
+    abi: erc1155Abi as AbiWithEvents,
+  },
+  [QUEST_TYPES.ERC20_MINT]: {
+    eventName: "Transfer",
+    abi: erc20Abi as AbiWithEvents,
+  },
+  [QUEST_TYPES.UNISWAP_SWAP]: {
+    eventName: "Swap",
+    abi: uniswapAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.TOKENS_MINTED]: {
+    eventName: "TokensMinted",
+    abi: boogaBearsAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.TOKENS_DEPOSITED]: {
+    eventName: "TokensDeposited",
+    abi: hookVaultAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.UNISWAP_MINT]: {
+    eventName: "Mint",
+    abi: uniswapAbi as AbiWithEvents,
+  },
+} as const;
+
 export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
 export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
 export const EGGS_ADDRESS = "0x30b8c95a6e7170a1322453b47722f10fea185b0f";
@@ -52,17 +93,16 @@ export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
 export const KODIAK_POOL_ADDRESS = "0x7573b735e6e9ecc65c0e55f49f458ac6e4d133b5";
 
 type QuestStepConfig = {
-  readonly type: string;
+  readonly type: QUEST_TYPES;
   readonly address: string;
-  readonly eventName: string;
   readonly filterCriteria?: Record<string, any>;
-  readonly requiredAmount?: bigint; // Make requiredAmount optional
+  readonly requiredAmount?: bigint;
 };
 
 type QuestConfig = {
   steps: QuestStepConfig[];
-  startTime?: number; // Unix timestamp in seconds
-  endTime?: number; // Unix timestamp in seconds
+  startTime?: number;
+  endTime?: number;
 };
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
@@ -71,18 +111,14 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
       steps: [
         {
           type: QUEST_TYPES.UNISWAP_SWAP,
-          address: "0x8a960A6e5f224D0a88BaD10463bDAD161b68C144", // Kodiak
-          eventName: "Swap",
-          // requiredAmount is omitted, will default to 1
+          address: "0x8a960A6e5f224D0a88BaD10463bDAD161b68C144",
         },
         {
           type: QUEST_TYPES.ERC721_MINT,
-          address: "0xBd10c70e94aCA5c0b9Eb434A62f2D8444Ec0649D", // Ticket
-          eventName: "Transfer",
+          address: "0xBd10c70e94aCA5c0b9Eb434A62f2D8444Ec0649D",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1720461600,
@@ -92,7 +128,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC20_MINT,
           address: STDV4TNT_ADDRESS,
-          eventName: "Transfer",
           filterCriteria: {
             from: zeroAddress,
           },
@@ -101,7 +136,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.UNISWAP_MINT,
           address: KODIAK_POOL_ADDRESS,
-          eventName: "Mint",
         },
       ],
       endTime: 1722974400,
@@ -113,7 +147,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC721_MINT,
           address: MYSTERY_BOX_ADDRESS,
-          eventName: "Transfer",
           requiredAmount: 1n,
         },
       ],
@@ -124,8 +157,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.TOKENS_DEPOSITED,
           address: HOOK_VAULT_ADDRESS,
-          eventName: "TokensDeposit",
-          requiredAmount: parseEther("0.025"), // ETH
+          requiredAmount: parseEther("0.025"),
         },
       ],
     },
@@ -134,7 +166,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: BULLAS_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: zeroAddress,
           },
@@ -143,7 +174,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: BULLAS_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: zeroAddress,
           },
@@ -157,7 +187,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: EGGS_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
@@ -166,25 +195,22 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: EGGS_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
           requiredAmount: 10n,
         },
       ],
-      endTime: 1722880800, // Example end time (adjust as needed)
+      endTime: 1722880800,
     },
     [QUESTS.CLASS_IS_IN_SESSION]: {
       steps: [
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: HOOKED_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1722103200,
@@ -194,11 +220,9 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: APICULTURE_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1718554800,
@@ -208,11 +232,9 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: APICULTURE_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
         },
       ],
       endTime: 1717690800,
@@ -224,7 +246,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.TOKENS_MINTED,
           address: BOOGA_BEARS_ADDRESS,
-          eventName: "TokensMinted",
           requiredAmount: 1n,
         },
       ],
@@ -236,11 +257,9 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC721_MINT,
           address: "0x9bc2C48189Ff3865875E4A85AfEb6d6ba848739B",
-          eventName: "Transfer",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
-          // requiredAmount is omitted, will default to 1
         },
       ],
     },
@@ -251,7 +270,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: ZORB_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
@@ -260,7 +278,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.ERC1155_MINT,
           address: ZORB_ADDRESS,
-          eventName: "TransferSingle",
           filterCriteria: {
             from: "0x0000000000000000000000000000000000000000",
           },
@@ -271,30 +288,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     },
   },
 } as const;
-
-export const QUEST_ABIS: Record<keyof typeof QUEST_TYPES, { abi: any }> = {
-  [QUEST_TYPES.ERC721_MINT]: {
-    abi: erc721Abi,
-  },
-  [QUEST_TYPES.ERC1155_MINT]: {
-    abi: erc1155Abi,
-  },
-  [QUEST_TYPES.ERC20_MINT]: {
-    abi: erc20Abi,
-  },
-  [QUEST_TYPES.UNISWAP_SWAP]: {
-    abi: uniswapAbi,
-  },
-  [QUEST_TYPES.UNISWAP_MINT]: {
-    abi: uniswapAbi,
-  },
-  [QUEST_TYPES.TOKENS_MINTED]: {
-    abi: boogaBearsAbi,
-  },
-  [QUEST_TYPES.TOKENS_DEPOSITED]: {
-    abi: hookVaultAbi,
-  },
-};
 
 export const BLOCK_RANGES = {
   [CHAINS.BASE]: {

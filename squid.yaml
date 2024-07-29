@@ -8,7 +8,6 @@ deploy:
     RPC_ZORA_HTTP: ${{ secrets.RPC_ZORA_HTTP }}
     RPC_BERA_HTTP: ${{ secrets.RPC_BERA_HTTP }}
   addons:
-    postgres:
     rpc:
       - arbitrum-one.http
       # - berachain.http
@@ -39,3 +38,8 @@ deploy:
     cmd:
       - sqd
       - serve:prod
+scale:
+  dedicated: true
+  api:
+    profile: small
+    replicas: 1

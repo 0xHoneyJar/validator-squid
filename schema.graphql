@@ -1,6 +1,6 @@
 type Quest @entity {
   id: ID!
-  name: String!
+  name: String! @index
   chain: String!
   steps: [QuestStep!]! @derivedFrom(field: "quest")
   startTime: Int
@@ -16,17 +16,16 @@ type QuestStep @entity {
   type: String!
   address: String!
   tokenId: BigInt
-  eventName: String!
   filterCriteria: JSON
   requiredAmount: BigInt!
 }
 
-type UserQuestProgress @entity {
-  id: ID!
-  address: String!
+type UserQuestProgress @entity @index(fields: ["id", "address"]) @index(fields: ["id", "completed"]) {
+  id: ID! @index
+  address: String! @index
   quest: Quest!
   currentStep: Int!
-  completed: Boolean!
+  completed: Boolean! @index
   stepProgresses: [StepProgress!]! @derivedFrom(field: "userQuestProgress")
 }
 
