@@ -77,16 +77,21 @@ export function createMain(chain: CHAINS) {
             let decodedLog;
 
             if (questAbi.abi.events && eventName in questAbi.abi.events) {
-              decodedLog = (
-                questAbi.abi.events[
-                  eventName as keyof typeof questAbi.abi.events
-                ] as any
-              ).decode(log);
-              // console.log("Decoded log:", decodedLog);
+              if (chain === CHAINS.BERACHAIN) {
+              }
+              try {
+                decodedLog = (
+                  questAbi.abi.events[
+                    eventName as keyof typeof questAbi.abi.events
+                  ] as any
+                ).decode(log);
+              } catch (error) {
+                continue;
+              }
             } else {
-              // console.log(
-              //   `Event ${eventName} not found in questAbi.abi.events`
-              // );
+              console.log(
+                `Event ${eventName} not found in questAbi.abi.events`
+              );
               continue;
             }
 
@@ -146,6 +151,9 @@ async function handleQuestEvent(
       break;
     case QUEST_TYPES.UNISWAP_SWAP:
       userAddress = decodedLog.recipient.toLowerCase();
+      break;
+    case QUEST_TYPES.UNISWAP_MINT:
+      userAddress = decodedLog.to.toLowerCase();
       break;
     case QUEST_TYPES.TOKENS_MINTED:
       userAddress = decodedLog.recipient.toLowerCase();

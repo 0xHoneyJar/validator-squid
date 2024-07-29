@@ -1,4 +1,4 @@
-import { parseEther } from "viem";
+import { parseEther, zeroAddress } from "viem";
 import * as boogaBearsAbi from "./abi/boogaBears";
 import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
@@ -26,6 +26,8 @@ export enum QUESTS {
   RUN_IT_BACK_TURBO = "Run It Back Turbo",
   CLASS_IS_IN_SESSION = "Class Is In Session",
   ZORB_MANIA = "Zorb Mania",
+  OOGA_BOOGA_TRIBE = "Ooga Booga Tribe",
+  UNION_FUR_AND_FRIENDSHIP = "Bera Union: Fur and Friendship",
 }
 
 export enum QUEST_TYPES {
@@ -35,6 +37,7 @@ export enum QUEST_TYPES {
   UNISWAP_SWAP = "UNISWAP_SWAP",
   TOKENS_MINTED = "TOKENS_MINTED",
   TOKENS_DEPOSITED = "TOKENS_DEPOSITED",
+  UNISWAP_MINT = "UNISWAP_MINT",
 }
 
 export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
@@ -44,6 +47,9 @@ export const HOOKED_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
 export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
 export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
 export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
+export const MYSTERY_BOX_ADDRESS = "0xCF97584781663B3Ce5d5D7858635f8E52c7490c0";
+export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
+export const KODIAK_POOL_ADDRESS = "0x7573b735e6e9ecc65c0e55f49f458ac6e4d133b5";
 
 type QuestStepConfig = {
   readonly type: string;
@@ -60,13 +66,65 @@ type QuestConfig = {
 };
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
+  [CHAINS.BERACHAIN]: {
+    [QUESTS.RUN_IT_BACK_TURBO]: {
+      steps: [
+        {
+          type: QUEST_TYPES.UNISWAP_SWAP,
+          address: "0x8a960A6e5f224D0a88BaD10463bDAD161b68C144", // Kodiak
+          eventName: "Swap",
+          // requiredAmount is omitted, will default to 1
+        },
+        {
+          type: QUEST_TYPES.ERC721_MINT,
+          address: "0xBd10c70e94aCA5c0b9Eb434A62f2D8444Ec0649D", // Ticket
+          eventName: "Transfer",
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+          // requiredAmount is omitted, will default to 1
+        },
+      ],
+      endTime: 1720461600,
+    },
+    [QUESTS.UNION_FUR_AND_FRIENDSHIP]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ERC20_MINT,
+          address: STDV4TNT_ADDRESS,
+          eventName: "Transfer",
+          filterCriteria: {
+            from: zeroAddress,
+          },
+          requiredAmount: 1n,
+        },
+        {
+          type: QUEST_TYPES.UNISWAP_MINT,
+          address: KODIAK_POOL_ADDRESS,
+          eventName: "Mint",
+        },
+      ],
+      endTime: 1722974400,
+    },
+  },
   [CHAINS.BASE]: {
+    [QUESTS.OOGA_BOOGA_TRIBE]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ERC721_MINT,
+          address: MYSTERY_BOX_ADDRESS,
+          eventName: "Transfer",
+          requiredAmount: 1n,
+        },
+      ],
+      endTime: 1723226400,
+    },
     [QUESTS.HONEY_HOOKS_AND_CUTLASSES]: {
       steps: [
         {
           type: QUEST_TYPES.TOKENS_DEPOSITED,
           address: HOOK_VAULT_ADDRESS,
-          eventName: "TokenDeposit",
+          eventName: "TokensDeposit",
           requiredAmount: parseEther("0.025"), // ETH
         },
       ],
@@ -78,7 +136,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           address: BULLAS_ADDRESS,
           eventName: "TransferSingle",
           filterCriteria: {
-            from: "0x0000000000000000000000000000000000000000",
+            from: zeroAddress,
           },
           requiredAmount: 1n,
         },
@@ -87,7 +145,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           address: BULLAS_ADDRESS,
           eventName: "TransferSingle",
           filterCriteria: {
-            from: "0x0000000000000000000000000000000000000000",
+            from: zeroAddress,
           },
           requiredAmount: 5n,
         },
@@ -166,7 +224,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.TOKENS_MINTED,
           address: BOOGA_BEARS_ADDRESS,
-          eventName: "TokenMinted",
+          eventName: "TokensMinted",
           requiredAmount: 1n,
         },
       ],
@@ -185,28 +243,6 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           // requiredAmount is omitted, will default to 1
         },
       ],
-    },
-  },
-  [CHAINS.BERACHAIN]: {
-    [QUESTS.RUN_IT_BACK_TURBO]: {
-      steps: [
-        {
-          type: QUEST_TYPES.UNISWAP_SWAP,
-          address: "0x8a960A6e5f224D0a88BaD10463bDAD161b68C144", // Kodiak
-          eventName: "Swap",
-          // requiredAmount is omitted, will default to 1
-        },
-        {
-          type: QUEST_TYPES.ERC721_MINT,
-          address: "0xBd10c70e94aCA5c0b9Eb434A62f2D8444Ec0649D", // Ticket
-          eventName: "Transfer",
-          filterCriteria: {
-            from: "0x0000000000000000000000000000000000000000",
-          },
-          // requiredAmount is omitted, will default to 1
-        },
-      ],
-      endTime: 1720461600,
     },
   },
   [CHAINS.ZORA]: {
@@ -249,6 +285,9 @@ export const QUEST_ABIS: Record<keyof typeof QUEST_TYPES, { abi: any }> = {
   [QUEST_TYPES.UNISWAP_SWAP]: {
     abi: uniswapAbi,
   },
+  [QUEST_TYPES.UNISWAP_MINT]: {
+    abi: uniswapAbi,
+  },
   [QUEST_TYPES.TOKENS_MINTED]: {
     abi: boogaBearsAbi,
   },
@@ -286,7 +325,7 @@ export const RPC_ENDPOINTS = {
 export const ARCHIVE_GATEWAYS = {
   [CHAINS.BASE]: "https://v2.archive.subsquid.io/network/base-mainnet",
   [CHAINS.ARBITRUM]: "https://v2.archive.subsquid.io/network/arbitrum-one",
-  [CHAINS.BERACHAIN]: "https://v2.archive.subsquid.io/network/berachain",
   [CHAINS.OPTIMISM]: "https://v2.archive.subsquid.io/network/optimism-mainnet",
   [CHAINS.ZORA]: "https://v2.archive.subsquid.io/network/zora-mainnet",
+  [CHAINS.BERACHAIN]: "https://v2.archive.subsquid.io/network/berachain-bartio",
 } as const;

@@ -48,6 +48,7 @@ export function createProcessor(chain: CHAINS) {
         uniswapAbi.events.Swap.topic,
         hookVaultAbi.events.TokensDeposited.topic,
         boogaBearsAbi.events.TokensMinted.topic,
+        uniswapAbi.events.Mint.topic,
       ],
     });
 
