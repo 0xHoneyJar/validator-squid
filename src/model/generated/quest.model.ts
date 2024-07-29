@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, StringColumn as StringColumn_, OneToMany as OneToMany_, IntColumn as IntColumn_} from "@subsquid/typeorm-store"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, StringColumn as StringColumn_, Index as Index_, OneToMany as OneToMany_, IntColumn as IntColumn_} from "@subsquid/typeorm-store"
 import {QuestStep} from "./questStep.model"
 
 @Entity_()
@@ -10,6 +10,7 @@ export class Quest {
     @PrimaryColumn_()
     id!: string
 
+    @Index_()
     @StringColumn_({nullable: false})
     name!: string
 
