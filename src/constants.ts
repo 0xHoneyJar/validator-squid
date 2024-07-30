@@ -148,7 +148,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     [QUESTS.OOGA_BOOGA_TRIBE]: {
       steps: [
         {
-          type: QUEST_TYPES.ERC721_MINT,
+          type: QUEST_TYPES.ERC1155_MINT,
           address: MYSTERY_BOX_ADDRESS,
           requiredAmount: 1n,
         },
