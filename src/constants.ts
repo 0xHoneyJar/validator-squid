@@ -5,6 +5,7 @@ import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
 import * as hookVaultAbi from "./abi/hookVault";
+import * as simplifiedUniswapAbi from "./abi/simplifiedUniswap";
 import * as uniswapAbi from "./abi/uniswap";
 
 export enum CHAINS {
@@ -77,7 +78,7 @@ export const QUEST_TYPE_INFO: Record<
   },
   [QUEST_TYPES.UNISWAP_MINT]: {
     eventName: "Mint",
-    abi: uniswapAbi as AbiWithEvents,
+    abi: simplifiedUniswapAbi as AbiWithEvents,
   },
 } as const;
 
@@ -90,13 +91,14 @@ export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
 export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
 export const MYSTERY_BOX_ADDRESS = "0xCF97584781663B3Ce5d5D7858635f8E52c7490c0";
 export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
-export const KODIAK_POOL_ADDRESS = "0x7573b735e6e9ecc65c0e55f49f458ac6e4d133b5";
+export const KODIAK_POOL_ADDRESS = "0xF331ABFfE9cB2b966Ab4C102ee268f4e1ad8e24b";
 
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
   readonly address: string;
   readonly filterCriteria?: Record<string, any>;
   readonly requiredAmount?: bigint;
+  readonly includeTransaction?: boolean;
 };
 
 type QuestConfig = {
@@ -136,6 +138,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         {
           type: QUEST_TYPES.UNISWAP_MINT,
           address: KODIAK_POOL_ADDRESS,
+          includeTransaction: true,
         },
       ],
       endTime: 1722974400,

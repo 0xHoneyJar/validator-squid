@@ -20,21 +20,29 @@ import {
 
 export function createProcessor(chain: CHAINS) {
   const questConfig = QUESTS_CONFIG[chain];
-  const addressToTopics: Record<string, string[]> = {};
+  const addressToTopics: Record<
+    string,
+    { topics: string[]; includeTransaction: boolean }
+  > = {};
 
   // Collect relevant addresses and topics
   for (const quest of Object.values(questConfig)) {
     for (const step of quest.steps) {
       const address = step.address.toLowerCase();
       if (!addressToTopics[address]) {
-        addressToTopics[address] = [];
+        addressToTopics[address] = { topics: [], includeTransaction: false };
       }
 
       const questTypeInfo = QUEST_TYPE_INFO[step.type as QUEST_TYPES];
       const topic = questTypeInfo.abi.events[questTypeInfo.eventName].topic;
 
-      if (!addressToTopics[address].includes(topic)) {
-        addressToTopics[address].push(topic);
+      if (!addressToTopics[address].topics.includes(topic)) {
+        addressToTopics[address].topics.push(topic);
+      }
+
+      // Set includeTransaction flag if specified in the step config
+      if (step.includeTransaction) {
+        addressToTopics[address].includeTransaction = true;
       }
     }
   }
@@ -52,11 +60,14 @@ export function createProcessor(chain: CHAINS) {
     })
     .setBlockRange({ from: BLOCK_RANGES[chain].from });
 
-  // Add logs for each address with its specific topics
-  for (const [address, topics] of Object.entries(addressToTopics)) {
+  // Add logs for each address with its specific topics and include transaction if specified
+  for (const [address, { topics, includeTransaction }] of Object.entries(
+    addressToTopics
+  )) {
     processor.addLog({
       address: [address],
       topic0: topics,
+      transaction: includeTransaction,
     });
   }
 

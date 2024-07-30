@@ -35,6 +35,7 @@ export function createMain(chain: CHAINS) {
         questStep.address = stepConfig.address;
         questStep.filterCriteria = stepConfig.filterCriteria;
         questStep.requiredAmount = stepConfig.requiredAmount || 1n;
+        questStep.includeTransaction = stepConfig.includeTransaction || false;
         quest.steps.push(questStep);
         questSteps.set(stepId, questStep);
       });
@@ -75,27 +76,41 @@ export function createMain(chain: CHAINS) {
 
             let decodedLog;
 
+            console.log("eventName", eventName);
+
             if (abi.events && eventName in abi.events) {
               const event = abi.events[eventName] as AbiEvent<any>;
               if (event.is(log)) {
                 decodedLog = event.decode(log);
+              } else {
+                console.log(`Event ${eventName} not found in abi.events`);
+                continue;
               }
             } else {
               console.log(`Event ${eventName} not found in abi.events`);
               continue;
             }
 
+            if (log.transaction) {
+              // Process transaction data
+              console.log(`Transaction hash: ${log.transaction.hash}`);
+              // Add more transaction processing logic as needed
+            }
+
             const processed = await handleQuestEvent(
               ctx,
               matchingQuest,
               matchingStep,
-              decodedLog
+              decodedLog,
+              matchingStep.includeTransaction
+                ? log.getTransaction().from
+                : undefined
             );
 
             if (processed) {
-              // console.log(
-              //   `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-              // );
+              console.log(
+                `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+              );
             }
           }
         }
@@ -111,7 +126,8 @@ async function handleQuestEvent(
   ctx: Context,
   quest: Quest,
   step: QuestStep,
-  decodedLog: any
+  decodedLog: any,
+  sender?: string
 ): Promise<boolean> {
   if (step.filterCriteria) {
     for (const [key, value] of Object.entries(step.filterCriteria)) {
@@ -130,9 +146,13 @@ async function handleQuestEvent(
   switch (step.type) {
     case QUEST_TYPES.ERC721_MINT:
     case QUEST_TYPES.ERC20_MINT:
-    case QUEST_TYPES.UNISWAP_MINT:
       userAddress = decodedLog.to.toLowerCase();
       if (step.type === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
+      break;
+    case QUEST_TYPES.UNISWAP_MINT:
+      userAddress = sender?.toLowerCase() || "";
+      // amount = decodedLog.amount;
+      // Feel like this might be less than 1
       break;
     case QUEST_TYPES.ERC1155_MINT:
       userAddress = decodedLog.to.toLowerCase();
