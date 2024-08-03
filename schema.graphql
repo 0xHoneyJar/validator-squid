@@ -28,7 +28,7 @@ type UserQuestProgress
   id: ID! @index
   address: String! @index
   quest: Quest!
-  currentStep: Int!
+  completedSteps: Int!
   completed: Boolean! @index
   stepProgresses: [StepProgress!]! @derivedFrom(field: "userQuestProgress")
 }
@@ -38,4 +38,5 @@ type StepProgress @entity {
   userQuestProgress: UserQuestProgress!
   stepNumber: Int!
   progressAmount: BigInt!
+  completed: Boolean! @index
 }

@@ -188,13 +188,6 @@ async function updateUserQuestProgress(
   // Ensure the Quest is saved first
   await ctx.store.save(quest);
 
-  // let user = await ctx.store.get(User, userAddress);
-  // if (!user) {
-  //   user = new User({ id: userAddress });
-  //   await ctx.store.upsert(user);
-  //   // console.log(`Created new user: ${userAddress}`);
-  // }
-
   let userQuestProgress = await ctx.store.get(
     UserQuestProgress,
     `${userAddress}-${quest.id}`
@@ -205,7 +198,7 @@ async function updateUserQuestProgress(
       id: `${userAddress}-${quest.id}`,
       address: userAddress,
       quest,
-      currentStep: 0,
+      completedSteps: 0,
       completed: false,
     });
     quest.totalParticipants += 1;
@@ -226,6 +219,7 @@ async function updateUserQuestProgress(
       userQuestProgress,
       stepNumber: completedStep.stepNumber,
       progressAmount: 0n,
+      completed: false,
     });
   }
 
@@ -233,26 +227,21 @@ async function updateUserQuestProgress(
   stepProgress.progressAmount += amount;
 
   if (stepProgress.progressAmount >= completedStep.requiredAmount) {
-    // For TOKENS_DEPOSITED, we need to check if the amount is at least the required amount
-    if (completedStep.type === QUEST_TYPES.TOKENS_DEPOSITED) {
-      if (amount < completedStep.requiredAmount) {
-        return; // Exit if the deposited amount is less than required
-      }
-    }
-
-    // Mark the step as completed if it wasn't already
-    if (userQuestProgress.currentStep < completedStep.stepNumber) {
-      userQuestProgress.currentStep = completedStep.stepNumber;
+    if (!stepProgress.completed) {
+      stepProgress.completed = true;
+      userQuestProgress.completedSteps += 1;
     }
 
     // Check if all steps are completed
-    const allStepsCompleted = quest.steps.every(async (step) => {
-      const stepProgressId = `${userQuestProgress.id}-step-${step.stepNumber}`;
-      const progress = await ctx.store.get(StepProgress, stepProgressId);
-      return progress && progress.progressAmount >= step.requiredAmount;
-    });
+    const allStepsCompleted = await Promise.all(
+      quest.steps.map(async (step) => {
+        const stepProgressId = `${userQuestProgress.id}-step-${step.stepNumber}`;
+        const progress = await ctx.store.get(StepProgress, stepProgressId);
+        return progress && progress.completed;
+      })
+    );
 
-    if (allStepsCompleted) {
+    if (allStepsCompleted.every(Boolean)) {
       userQuestProgress.completed = true;
       quest.totalCompletions += 1;
       await ctx.store.save(quest);
@@ -261,5 +250,4 @@ async function updateUserQuestProgress(
 
   await ctx.store.save(stepProgress);
   await ctx.store.save(userQuestProgress);
-  // console.log(`Updated UserQuestProgress: ${userAddress}-${quest.id}`);
 }

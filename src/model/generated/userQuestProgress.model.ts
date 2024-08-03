@@ -22,7 +22,7 @@ export class UserQuestProgress {
     quest!: Quest
 
     @IntColumn_({nullable: false})
-    currentStep!: number
+    completedSteps!: number
 
     @Index_()
     @BooleanColumn_({nullable: false})

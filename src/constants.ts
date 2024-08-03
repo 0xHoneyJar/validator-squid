@@ -89,7 +89,7 @@ export const HOOKED_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
 export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
 export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
 export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
-export const MYSTERY_BOX_ADDRESS = "0xCF97584781663B3Ce5d5D7858635f8E52c7490c0";
+export const MYSTERY_BOX_ADDRESS = "0xBB7B805B257d7C76CA9435B3ffe780355E4C4B17";
 export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
 export const KODIAK_POOL_ADDRESS = "0xF331ABFfE9cB2b966Ab4C102ee268f4e1ad8e24b";
 
@@ -141,7 +141,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           includeTransaction: true,
         },
       ],
-      endTime: 1722974400,
+      endTime: 1722978000,
     },
   },
   [CHAINS.BASE]: {
