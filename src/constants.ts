@@ -1,10 +1,12 @@
 import { AbiEvent } from "@subsquid/evm-abi";
 import { parseEther, zeroAddress } from "viem";
+import * as bgtAbi from "./abi/bgt";
 import * as boogaBearsAbi from "./abi/boogaBears";
 import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
 import * as hookVaultAbi from "./abi/hookVault";
+import * as rewardsVaultAbi from "./abi/rewardsVault";
 import * as simplifiedUniswapAbi from "./abi/simplifiedUniswap";
 import * as uniswapAbi from "./abi/uniswap";
 
@@ -30,6 +32,13 @@ export enum QUESTS {
   ZORB_MANIA = "Zorb Mania",
   OOGA_BOOGA_TRIBE = "Ooga Booga Tribe",
   UNION_FUR_AND_FRIENDSHIP = "Bera Union: Fur and Friendship",
+  DELEGATOOOR = "Delegatooor",
+  STAKOOOR = "Stakooor",
+  THE_HONEY_SITE = "The Honey Site",
+}
+
+export enum MISSIONS {
+  BERA_METAL_SOLID = "Bera Metal Solid",
 }
 
 export enum QUEST_TYPES {
@@ -40,6 +49,14 @@ export enum QUEST_TYPES {
   TOKENS_MINTED = "TOKENS_MINTED",
   TOKENS_DEPOSITED = "TOKENS_DEPOSITED",
   UNISWAP_MINT = "UNISWAP_MINT",
+  DELEGATE = "DELEGATE",
+  STAKE = "STAKE",
+  CLAIM_BGT_REWARD = "CLAIM_BGT_REWARD",
+}
+
+export enum MISSION_TYPES {
+  ACTIVATE_BOOST = "ACTIVATE_BOOST",
+  DROP_BOOST = "DROP_BOOST",
 }
 
 type AbiWithEvents = {
@@ -80,7 +97,33 @@ export const QUEST_TYPE_INFO: Record<
     eventName: "Mint",
     abi: simplifiedUniswapAbi as AbiWithEvents,
   },
+  [QUEST_TYPES.DELEGATE]: {
+    eventName: "ActivateBoost",
+    abi: bgtAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.STAKE]: {
+    eventName: "Staked",
+    abi: rewardsVaultAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.CLAIM_BGT_REWARD]: {
+    eventName: "RewardPaid",
+    abi: rewardsVaultAbi as AbiWithEvents,
+  },
 } as const;
+
+export const MISSION_TYPE_INFO: Record<
+  MISSION_TYPES,
+  { eventName: string; abi: AbiWithEvents }
+> = {
+  [MISSION_TYPES.ACTIVATE_BOOST]: {
+    eventName: "ActivateBoost",
+    abi: bgtAbi as AbiWithEvents,
+  },
+  [MISSION_TYPES.DROP_BOOST]: {
+    eventName: "DropBoost",
+    abi: bgtAbi as AbiWithEvents,
+  },
+};
 
 export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
 export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
@@ -92,6 +135,13 @@ export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
 export const MYSTERY_BOX_ADDRESS = "0xBB7B805B257d7C76CA9435B3ffe780355E4C4B17";
 export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
 export const KODIAK_POOL_ADDRESS = "0xF331ABFfE9cB2b966Ab4C102ee268f4e1ad8e24b";
+export const BGT_ADDRESS = "0xbDa130737BDd9618301681329bF2e46A016ff9Ad";
+// HONEY-WBERA Rewards Vault
+export const REWARDS_VAULT_ADDRESS =
+  "0xAD57d7d39a487C04a44D3522b910421888Fb9C6d";
+export const THJ_VALIDATOR_ADDRESS =
+  "0x40495A781095932e2FC8dccA69F5e358711Fdd41";
+export const HONEY_SITE_ADDRESS = "0x491e1d15f2a78799520937c02bb03a952140ac46";
 
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
@@ -107,8 +157,45 @@ type QuestConfig = {
   endTime?: number;
 };
 
+type MissionConfig = {
+  address: string;
+  startTime: number;
+  startStreak: {
+    type: MISSION_TYPES;
+    filterCriteria: Record<string, any>;
+  };
+  endStreak: {
+    type: MISSION_TYPES;
+    filterCriteria: Record<string, any>;
+  };
+};
+
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BERACHAIN]: {
+    [QUESTS.STAKOOOR]: {
+      steps: [
+        {
+          type: QUEST_TYPES.STAKE,
+          address: REWARDS_VAULT_ADDRESS,
+        },
+        {
+          type: QUEST_TYPES.CLAIM_BGT_REWARD,
+          address: REWARDS_VAULT_ADDRESS,
+        },
+      ],
+    },
+    [QUESTS.DELEGATOOOR]: {
+      steps: [
+        {
+          type: QUEST_TYPES.DELEGATE,
+          address: BGT_ADDRESS,
+          filterCriteria: {
+            validator: THJ_VALIDATOR_ADDRESS,
+          },
+        },
+      ],
+      startTime: 1722183600,
+    },
     [QUESTS.RUN_IT_BACK_TURBO]: {
       steps: [
         {
@@ -141,7 +228,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           includeTransaction: true,
         },
       ],
-      endTime: 1722978000,
+      endTime: 1723060800,
     },
   },
   [CHAINS.BASE]: {
@@ -244,6 +331,18 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     },
   },
   [CHAINS.ARBITRUM]: {
+    [QUESTS.THE_HONEY_SITE]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ERC1155_MINT,
+          address: HONEY_SITE_ADDRESS,
+          filterCriteria: {
+            from: "0x0000000000000000000000000000000000000000",
+          },
+        },
+      ],
+      endTime: 1723917600,
+    },
     [QUESTS.PROOF_OF_BOOGA]: {
       steps: [
         {
@@ -291,6 +390,27 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
     },
   },
 } as const;
+
+export const MISSIONS_CONFIG: Record<string, Record<string, MissionConfig>> = {
+  [CHAINS.BERACHAIN]: {
+    // [MISSIONS.BERA_METAL_SOLID]: {
+    //   address: BGT_ADDRESS,
+    //   startTime: 1720461600,
+    //   startStreak: {
+    //     type: MISSION_TYPES.ACTIVATE_BOOST,
+    //     filterCriteria: {
+    //       validator: THJ_VALIDATOR_ADDRESS,
+    //     },
+    //   },
+    //   endStreak: {
+    //     type: MISSION_TYPES.DROP_BOOST,
+    //     filterCriteria: {
+    //       validator: THJ_VALIDATOR_ADDRESS,
+    //     },
+    //   },
+    // },
+  },
+};
 
 export const BLOCK_RANGES = {
   [CHAINS.BASE]: {
