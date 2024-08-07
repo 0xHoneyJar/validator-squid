@@ -228,7 +228,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           includeTransaction: true,
         },
       ],
-      endTime: 1723060800,
+      endTime: 1723233600,
     },
   },
   [CHAINS.BASE]: {
