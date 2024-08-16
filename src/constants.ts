@@ -178,14 +178,15 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           type: QUEST_TYPES.STAKE,
           address: REWARDS_VAULT_ADDRESS,
         },
+      ],
+      startTime: 1722183600,
+    },
+    [QUESTS.DELEGATOOOR]: {
+      steps: [
         {
           type: QUEST_TYPES.CLAIM_BGT_REWARD,
           address: REWARDS_VAULT_ADDRESS,
         },
-      ],
-    },
-    [QUESTS.DELEGATOOOR]: {
-      steps: [
         {
           type: QUEST_TYPES.DELEGATE,
           address: BGT_ADDRESS,
