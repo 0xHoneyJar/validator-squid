@@ -193,6 +193,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
           filterCriteria: {
             validator: THJ_VALIDATOR_ADDRESS,
           },
+          requiredAmount: parseEther("1"),
         },
       ],
       startTime: 1722183600,
