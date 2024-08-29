@@ -23,4 +23,7 @@ export class StepProgress {
     @Index_()
     @BooleanColumn_({nullable: false})
     completed!: boolean
+
+    @BigIntColumn_({nullable: false})
+    startTimestamp!: bigint
 }

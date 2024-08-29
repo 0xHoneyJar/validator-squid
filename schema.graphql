@@ -39,4 +39,5 @@ type StepProgress @entity {
   stepNumber: Int!
   progressAmount: BigInt!
   completed: Boolean! @index
+  startTimestamp: BigInt! # Added this line
 }

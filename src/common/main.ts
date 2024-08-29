@@ -47,7 +47,8 @@ function initializeQuestsAndSteps(
   questSteps: Map<string, QuestStep>
 ) {
   for (const [questName, questConfig] of Object.entries(QUESTS_CONFIG[chain])) {
-    const quest = new Quest({ id: questName });
+    const questId = `${chain}-${questName.replace(/\s+/g, '-').toLowerCase()}`;
+    const quest = new Quest({ id: questId });
     quest.name = questName;
     quest.chain = chain;
     quest.steps = [];
@@ -207,7 +208,8 @@ function processQuestEvent(
       return false;
   }
 
-  const key = `${userAddress}-${quest.id}`;
+  // Use only the userAddress as the key
+  const key = userAddress;
   const existingUpdate = userProgressUpdates.get(key);
   if (existingUpdate) {
     existingUpdate.amount += amount;
@@ -225,6 +227,7 @@ async function updateUserQuestProgress(
   completedStep: QuestStep,
   amount: bigint
 ) {
+  // Use only the userAddress to create the userQuestProgressId
   const userQuestProgressId = `${userAddress}-${quest.id}`;
   let userQuestProgress = await ctx.store.get(
     UserQuestProgress,
@@ -234,7 +237,7 @@ async function updateUserQuestProgress(
   if (!userQuestProgress) {
     userQuestProgress = new UserQuestProgress({
       id: userQuestProgressId,
-      address: userAddress,
+      address: userAddress, // This is correct, using only the userAddress
       quest,
       completedSteps: 0,
       completed: false,
@@ -252,6 +255,7 @@ async function updateUserQuestProgress(
       stepNumber: completedStep.stepNumber,
       progressAmount: 0n,
       completed: false,
+      startTimestamp: BigInt(Math.floor(Date.now() / 1000)), // Add this line
     });
   }
 
