@@ -2,6 +2,7 @@ import { AbiEvent } from "@subsquid/evm-abi";
 import { parseEther, zeroAddress } from "viem";
 import * as bgtAbi from "./abi/bgt";
 import * as boogaBearsAbi from "./abi/boogaBears";
+import * as diracVaultAbi from "./abi/diracVault";
 import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
@@ -35,6 +36,7 @@ export enum QUESTS {
   DELEGATOOOR = "Delegatooor",
   STAKOOOR = "Stakooor",
   THE_HONEY_SITE = "The Honey Site",
+  BERAC_POL = "BeracPol",
 }
 
 export enum MISSIONS {
@@ -52,6 +54,7 @@ export enum QUEST_TYPES {
   DELEGATE = "DELEGATE",
   STAKE = "STAKE",
   CLAIM_BGT_REWARD = "CLAIM_BGT_REWARD",
+  DIRAC_DEPOSIT = "DIRAC_DEPOSIT",
 }
 
 export enum MISSION_TYPES {
@@ -109,6 +112,10 @@ export const QUEST_TYPE_INFO: Record<
     eventName: "RewardPaid",
     abi: rewardsVaultAbi as AbiWithEvents,
   },
+  [QUEST_TYPES.DIRAC_DEPOSIT]: {
+    eventName: "Deposit",
+    abi: diracVaultAbi as AbiWithEvents,
+  },
 } as const;
 
 export const MISSION_TYPE_INFO: Record<
@@ -142,6 +149,11 @@ export const REWARDS_VAULT_ADDRESS =
 export const THJ_VALIDATOR_ADDRESS =
   "0x40495A781095932e2FC8dccA69F5e358711Fdd41";
 export const HONEY_SITE_ADDRESS = "0x491e1d15f2a78799520937c02bb03a952140ac46";
+// DIRAC Vaults
+export const IBGT_DIRAC_VAULT_ADDRESS =
+  "0x50bd749123A06F6a951AcE3C21E6d565176dCd7A";
+export const NECT_DIRAC_VAULT_ADDRESS =
+  "0xd5491A22D05092BDC388af8b8b69d58c2f5cc4Bc";
 
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
@@ -172,6 +184,19 @@ type MissionConfig = {
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BERACHAIN]: {
+    [QUESTS.BERAC_POL]: {
+      steps: [
+        {
+          type: QUEST_TYPES.DIRAC_DEPOSIT,
+          address: IBGT_DIRAC_VAULT_ADDRESS,
+        },
+        {
+          type: QUEST_TYPES.DIRAC_DEPOSIT,
+          address: NECT_DIRAC_VAULT_ADDRESS,
+        },
+      ],
+      startTime: 1724367186,
+    },
     [QUESTS.STAKOOOR]: {
       steps: [
         {

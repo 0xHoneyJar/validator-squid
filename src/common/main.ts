@@ -47,7 +47,7 @@ function initializeQuestsAndSteps(
   questSteps: Map<string, QuestStep>
 ) {
   for (const [questName, questConfig] of Object.entries(QUESTS_CONFIG[chain])) {
-    const questId = `${chain}-${questName.replace(/\s+/g, '-').toLowerCase()}`;
+    const questId = `${chain}-${questName.replace(/\s+/g, "-").toLowerCase()}`;
     const quest = new Quest({ id: questId });
     quest.name = questName;
     quest.chain = chain;
@@ -126,9 +126,9 @@ async function processBatch(
               );
 
               if (processed) {
-                console.log(
-                  `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-                );
+                // console.log(
+                //   `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+                // );
               }
             }
           }
@@ -201,6 +201,10 @@ function processQuestEvent(
       userAddress = decodedLog.account.toLowerCase();
       break;
     case QUEST_TYPES.DELEGATE:
+      userAddress = decodedLog.sender.toLowerCase();
+      amount = decodedLog.amount;
+      break;
+    case QUEST_TYPES.DIRAC_DEPOSIT:
       userAddress = decodedLog.sender.toLowerCase();
       break;
     default:
