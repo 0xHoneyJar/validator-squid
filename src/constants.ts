@@ -7,9 +7,14 @@ import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
 import * as hookVaultAbi from "./abi/hookVault";
+import * as lendingPoolAbi from "./abi/lendingPool";
+import * as memeswapDeployerAbi from "./abi/memeswapDeployer";
 import * as rewardsVaultAbi from "./abi/rewardsVault";
 import * as simplifiedUniswapAbi from "./abi/simplifiedUniswap";
+import * as strategiesControllerAbi from "./abi/strategiesController";
 import * as uniswapAbi from "./abi/uniswap";
+
+const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
 export enum CHAINS {
   BASE = "base",
@@ -37,6 +42,9 @@ export enum QUESTS {
   STAKOOOR = "Stakooor",
   THE_HONEY_SITE = "The Honey Site",
   BERAC_POL = "BeracPol",
+  HONEY_HEIST = "Honey Heist",
+  BRUUVVPRINT = "Bruuvvprint!",
+  JANI_VS_POT = "Jani vs. Pot",
 }
 
 export enum MISSIONS {
@@ -55,6 +63,10 @@ export enum QUEST_TYPES {
   STAKE = "STAKE",
   CLAIM_BGT_REWARD = "CLAIM_BGT_REWARD",
   DIRAC_DEPOSIT = "DIRAC_DEPOSIT",
+  ZERU_DEPOSIT = "ZERU_DEPOSIT",
+  ZERU_BORROW = "ZERU_BORROW",
+  ZERU_OPEN_POSITION = "ZERU_OPEN_POSITION",
+  MEMESWAP_DEPLOY = "MEMESWAP_DEPLOY",
 }
 
 export enum MISSION_TYPES {
@@ -116,6 +128,22 @@ export const QUEST_TYPE_INFO: Record<
     eventName: "Deposit",
     abi: diracVaultAbi as AbiWithEvents,
   },
+  [QUEST_TYPES.ZERU_DEPOSIT]: {
+    eventName: "Deposit",
+    abi: lendingPoolAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.ZERU_BORROW]: {
+    eventName: "Borrow",
+    abi: lendingPoolAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.ZERU_OPEN_POSITION]: {
+    eventName: "openPositionEvent",
+    abi: strategiesControllerAbi as AbiWithEvents,
+  },
+  [QUEST_TYPES.MEMESWAP_DEPLOY]: {
+    eventName: "Deployed",
+    abi: memeswapDeployerAbi as AbiWithEvents,
+  },
 } as const;
 
 export const MISSION_TYPE_INFO: Record<
@@ -154,6 +182,11 @@ export const IBGT_DIRAC_VAULT_ADDRESS =
   "0x50bd749123A06F6a951AcE3C21E6d565176dCd7A";
 export const NECT_DIRAC_VAULT_ADDRESS =
   "0xd5491A22D05092BDC388af8b8b69d58c2f5cc4Bc";
+export const ZERU_LENDING_POOL = "0x989C7646B7F3f351E00f3e231247993C7e8C8CA2";
+export const ZERU_STRATEGIES_CONTROLLER =
+  "0x744E7099cb4070f9EC4108fC6fAFe9858ac94d79";
+export const HONEY_ADDRESS = "0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03";
+export const WBERA_ADDRESS = "0x7507c1dc16935B82698e4C63f2746A2fCf994dF8";
 
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
@@ -184,6 +217,33 @@ type MissionConfig = {
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BERACHAIN]: {
+    [QUESTS.HONEY_HEIST]: {
+      steps: [
+        {
+          type: QUEST_TYPES.ZERU_DEPOSIT,
+          address: ZERU_LENDING_POOL,
+          filterCriteria: {
+            reserve: HONEY_ADDRESS,
+          },
+        },
+        {
+          type: QUEST_TYPES.ZERU_BORROW,
+          address: ZERU_LENDING_POOL,
+          filterCriteria: {
+            reserve: WBERA_ADDRESS,
+          },
+        },
+        {
+          type: QUEST_TYPES.ZERU_OPEN_POSITION,
+          address: ZERU_STRATEGIES_CONTROLLER,
+          filterCriteria: {
+            strategyId: "1", // Change this to a string
+          },
+        },
+      ],
+      startTime: 1724673600 - ONE_DAY_IN_SECONDS, // 1 day before
+      endTime: 1725192000,
+    },
     [QUESTS.BERAC_POL]: {
       steps: [
         {
@@ -196,6 +256,7 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
         },
       ],
       startTime: 1724367186,
+      endTime: 1725480000,
     },
     [QUESTS.STAKOOOR]: {
       steps: [

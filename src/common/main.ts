@@ -91,6 +91,7 @@ async function processBatch(
 
     for (let log of block.logs) {
       const logAddress = log.address.toLowerCase();
+      console.log(`Processing log for address: ${logAddress}`);
 
       const matchingQuests = questsArray.filter(
         (quest) =>
@@ -99,9 +100,19 @@ async function processBatch(
           (!quest.endTime || currentTimestamp <= quest.endTime)
       );
 
+      console.log(
+        `Matching quests: ${matchingQuests.map((q) => q.name).join(", ")}`
+      );
+
       for (const matchingQuest of matchingQuests) {
         const matchingSteps = matchingQuest.steps.filter(
           (step) => step.address === logAddress
+        );
+
+        console.log(
+          `Matching steps for quest ${matchingQuest.name}: ${matchingSteps
+            .map((s) => s.stepNumber)
+            .join(", ")}`
         );
 
         for (const matchingStep of matchingSteps) {
@@ -109,9 +120,16 @@ async function processBatch(
             QUEST_TYPE_INFO[matchingStep.type as QUEST_TYPES];
           const { abi, eventName } = questTypeInfo;
 
+          console.log(
+            `Checking event ${eventName} for step ${matchingStep.stepNumber}`
+          );
+
           if (abi.events && eventName in abi.events) {
             const event = abi.events[eventName] as AbiEvent<any>;
             if (event.is(log)) {
+              console.log(
+                `Event ${eventName} matched for step ${matchingStep.stepNumber}`
+              );
               const decodedLog = event.decode(log);
               const sender = matchingStep.includeTransaction
                 ? log.getTransaction().from
@@ -126,11 +144,23 @@ async function processBatch(
               );
 
               if (processed) {
-                // console.log(
-                //   `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-                // );
+                console.log(
+                  `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+                );
+              } else {
+                console.log(
+                  `Failed to process event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
+                );
               }
+            } else {
+              console.log(
+                `Event ${eventName} did not match for step ${matchingStep.stepNumber}`
+              );
             }
+          } else {
+            console.log(
+              `Event ${eventName} not found in ABI for step ${matchingStep.stepNumber}`
+            );
           }
         }
       }
@@ -159,9 +189,33 @@ function processQuestEvent(
   >,
   sender?: string
 ): boolean {
+  console.log(
+    `Processing event for quest: ${quest.name}, step: ${step.stepNumber}`
+  );
+  console.log(
+    `Decoded log:`,
+    JSON.stringify(decodedLog, (_, v) =>
+      typeof v === "bigint" ? v.toString() : v
+    )
+  );
+
   if (step.filterCriteria) {
     for (const [key, value] of Object.entries(step.filterCriteria)) {
-      if (decodedLog[key] !== value) {
+      let logValue = decodedLog[key];
+      let criteriaValue = value;
+
+      // Convert BigInt to string for comparison
+      if (typeof logValue === "bigint") {
+        logValue = logValue.toString();
+      }
+      if (typeof criteriaValue === "bigint") {
+        criteriaValue = criteriaValue.toString();
+      }
+
+      if (logValue.toLowerCase() !== criteriaValue.toLowerCase()) {
+        console.log(
+          `Filter criteria not met for key ${key}. Expected: ${criteriaValue}, Got: ${logValue}`
+        );
         return false;
       }
     }
@@ -170,58 +224,73 @@ function processQuestEvent(
   let userAddress: string;
   let amount: bigint = 1n;
 
-  switch (step.type) {
-    case QUEST_TYPES.ERC721_MINT:
-    case QUEST_TYPES.ERC20_MINT:
-      userAddress = decodedLog.to.toLowerCase();
-      if (step.type === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
-      break;
-    case QUEST_TYPES.UNISWAP_MINT:
-      userAddress = sender?.toLowerCase() || "";
-      break;
-    case QUEST_TYPES.ERC1155_MINT:
-      userAddress = decodedLog.to.toLowerCase();
-      amount = decodedLog.amount;
-      break;
-    case QUEST_TYPES.UNISWAP_SWAP:
-      userAddress = decodedLog.recipient.toLowerCase();
-      break;
-    case QUEST_TYPES.TOKENS_MINTED:
-      userAddress = decodedLog.recipient.toLowerCase();
-      amount = decodedLog.amount;
-      break;
-    case QUEST_TYPES.TOKENS_DEPOSITED:
-      userAddress = decodedLog.depositor.toLowerCase();
-      amount = decodedLog.depositAmount;
-      break;
-    case QUEST_TYPES.STAKE:
-      userAddress = decodedLog.account.toLowerCase();
-      break;
-    case QUEST_TYPES.CLAIM_BGT_REWARD:
-      userAddress = decodedLog.account.toLowerCase();
-      break;
-    case QUEST_TYPES.DELEGATE:
-      userAddress = decodedLog.sender.toLowerCase();
-      amount = decodedLog.amount;
-      break;
-    case QUEST_TYPES.DIRAC_DEPOSIT:
-      userAddress = decodedLog.sender.toLowerCase();
-      break;
-    default:
-      console.log(`Unsupported quest type: ${step.type}`);
-      return false;
-  }
+  try {
+    switch (step.type) {
+      case QUEST_TYPES.ERC721_MINT:
+      case QUEST_TYPES.ERC20_MINT:
+        userAddress = decodedLog.to.toLowerCase();
+        if (step.type === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
+        break;
+      case QUEST_TYPES.UNISWAP_MINT:
+        userAddress = sender?.toLowerCase() || "";
+        break;
+      case QUEST_TYPES.ERC1155_MINT:
+        userAddress = decodedLog.to.toLowerCase();
+        amount = decodedLog.amount;
+        break;
+      case QUEST_TYPES.UNISWAP_SWAP:
+        userAddress = decodedLog.recipient.toLowerCase();
+        break;
+      case QUEST_TYPES.TOKENS_MINTED:
+        userAddress = decodedLog.recipient.toLowerCase();
+        amount = decodedLog.amount;
+        break;
+      case QUEST_TYPES.TOKENS_DEPOSITED:
+        userAddress = decodedLog.depositor.toLowerCase();
+        amount = decodedLog.depositAmount;
+        break;
+      case QUEST_TYPES.STAKE:
+        userAddress = decodedLog.account.toLowerCase();
+        break;
+      case QUEST_TYPES.CLAIM_BGT_REWARD:
+        userAddress = decodedLog.account.toLowerCase();
+        break;
+      case QUEST_TYPES.DELEGATE:
+        userAddress = decodedLog.sender.toLowerCase();
+        amount = decodedLog.amount;
+        break;
+      case QUEST_TYPES.DIRAC_DEPOSIT:
+        userAddress = decodedLog.sender.toLowerCase();
+        break;
+      case QUEST_TYPES.MEMESWAP_DEPLOY:
+        userAddress = decodedLog.deployer.toLowerCase();
+        break;
+      default:
+        console.log(`Unsupported quest type: ${step.type}`);
+        return false;
+    }
 
-  // Use only the userAddress as the key
-  const key = userAddress;
-  const existingUpdate = userProgressUpdates.get(key);
-  if (existingUpdate) {
-    existingUpdate.amount += amount;
-  } else {
-    userProgressUpdates.set(key, { quest, step, amount });
-  }
+    console.log(
+      `Processed event. User: ${userAddress}, Amount: ${amount.toString()}`
+    );
 
-  return true;
+    // Use only the userAddress as the key
+    const key = userAddress;
+    const existingUpdate = userProgressUpdates.get(key);
+    if (existingUpdate) {
+      existingUpdate.amount += amount;
+    } else {
+      userProgressUpdates.set(key, { quest, step, amount });
+    }
+
+    return true;
+  } catch (error) {
+    console.error(
+      `Error processing event for quest: ${quest.name}, step: ${step.stepNumber}`,
+      error
+    );
+    return false;
+  }
 }
 
 async function updateUserQuestProgress(
