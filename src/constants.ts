@@ -6,6 +6,7 @@ import * as diracVaultAbi from "./abi/diracVault";
 import * as erc1155Abi from "./abi/erc1155";
 import * as erc20Abi from "./abi/erc20";
 import * as erc721Abi from "./abi/erc721";
+import * as ftoPairAbi from "./abi/ftoPair";
 import * as hookVaultAbi from "./abi/hookVault";
 import * as lendingPoolAbi from "./abi/lendingPool";
 import * as memeswapDeployerAbi from "./abi/memeswapDeployer";
@@ -67,6 +68,8 @@ export enum QUEST_TYPES {
   ZERU_BORROW = "ZERU_BORROW",
   ZERU_OPEN_POSITION = "ZERU_OPEN_POSITION",
   MEMESWAP_DEPLOY = "MEMESWAP_DEPLOY",
+  // TPOT_FAUCET = "TPOT_FAUCET",
+  FTO_DEPOSIT = "FTO_DEPOSIT",
 }
 
 export enum MISSION_TYPES {
@@ -144,6 +147,10 @@ export const QUEST_TYPE_INFO: Record<
     eventName: "Deployed",
     abi: memeswapDeployerAbi as AbiWithEvents,
   },
+  [QUEST_TYPES.FTO_DEPOSIT]: {
+    eventName: "DepositRaisedToken",
+    abi: ftoPairAbi as AbiWithEvents,
+  },
 } as const;
 
 export const MISSION_TYPE_INFO: Record<
@@ -187,6 +194,12 @@ export const ZERU_STRATEGIES_CONTROLLER =
   "0x744E7099cb4070f9EC4108fC6fAFe9858ac94d79";
 export const HONEY_ADDRESS = "0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03";
 export const WBERA_ADDRESS = "0x7507c1dc16935B82698e4C63f2746A2fCf994dF8";
+// HoneyPot
+export const TPOT_FAUCET_ADDRESS = "0xfc5e3743E9FAC8BB60408797607352E24Db7d65E";
+export const HONEYPOT_POT_ADDRESS =
+  "0x93f8beabd145a61067ef2fca38c4c9c31d47ab7e";
+export const HONEYPOT_JANI_ADDRESS =
+  "0x2c504e661750e03aa9252c67e771dc059a521863";
 
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
@@ -194,6 +207,7 @@ type QuestStepConfig = {
   readonly filterCriteria?: Record<string, any>;
   readonly requiredAmount?: bigint;
   readonly includeTransaction?: boolean;
+  readonly path?: string; // Add this line
 };
 
 type QuestConfig = {
@@ -217,6 +231,22 @@ type MissionConfig = {
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BERACHAIN]: {
+    [QUESTS.JANI_VS_POT]: {
+      steps: [
+        {
+          type: QUEST_TYPES.FTO_DEPOSIT,
+          address: HONEYPOT_JANI_ADDRESS,
+          path: "Jani", // Add this line
+        },
+        {
+          type: QUEST_TYPES.FTO_DEPOSIT,
+          address: HONEYPOT_POT_ADDRESS,
+          path: "Pot", // Add this line
+        },
+      ],
+      startTime: 1724673600 - ONE_DAY_IN_SECONDS, // 1 day before
+      endTime: 1725192000,
+    },
     [QUESTS.HONEY_HEIST]: {
       steps: [
         {

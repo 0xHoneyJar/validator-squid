@@ -67,6 +67,7 @@ function initializeQuestsAndSteps(
       questStep.filterCriteria = stepConfig.filterCriteria;
       questStep.requiredAmount = stepConfig.requiredAmount || 1n;
       questStep.includeTransaction = stepConfig.includeTransaction || false;
+      questStep.path = stepConfig.path; // Add this line
       quest.steps.push(questStep);
       questSteps.set(stepId, questStep);
     });
@@ -83,7 +84,7 @@ async function processBatch(
 ) {
   const userProgressUpdates: Map<
     string,
-    { quest: Quest; step: QuestStep; amount: bigint }
+    { quest: Quest; step: QuestStep; amount: bigint; path?: string }
   > = new Map();
 
   for (let block of batch) {
@@ -174,7 +175,8 @@ async function processBatch(
       userAddress,
       update.quest,
       update.step,
-      update.amount
+      update.amount,
+      update.path
     );
   }
 }
@@ -185,7 +187,7 @@ function processQuestEvent(
   decodedLog: any,
   userProgressUpdates: Map<
     string,
-    { quest: Quest; step: QuestStep; amount: bigint }
+    { quest: Quest; step: QuestStep; amount: bigint; path?: string }
   >,
   sender?: string
 ): boolean {
@@ -265,6 +267,9 @@ function processQuestEvent(
       case QUEST_TYPES.MEMESWAP_DEPLOY:
         userAddress = decodedLog.deployer.toLowerCase();
         break;
+      case QUEST_TYPES.FTO_DEPOSIT:
+        userAddress = decodedLog.depositer.toLowerCase();
+        break;
       default:
         console.log(`Unsupported quest type: ${step.type}`);
         return false;
@@ -280,7 +285,12 @@ function processQuestEvent(
     if (existingUpdate) {
       existingUpdate.amount += amount;
     } else {
-      userProgressUpdates.set(key, { quest, step, amount });
+      userProgressUpdates.set(key, {
+        quest,
+        step,
+        amount,
+        path: step.path || undefined,
+      });
     }
 
     return true;
@@ -298,7 +308,8 @@ async function updateUserQuestProgress(
   userAddress: string,
   quest: Quest,
   completedStep: QuestStep,
-  amount: bigint
+  amount: bigint,
+  path?: string
 ) {
   // Use only the userAddress to create the userQuestProgressId
   const userQuestProgressId = `${userAddress}-${quest.id}`;
@@ -328,7 +339,8 @@ async function updateUserQuestProgress(
       stepNumber: completedStep.stepNumber,
       progressAmount: 0n,
       completed: false,
-      startTimestamp: BigInt(Math.floor(Date.now() / 1000)), // Add this line
+      startTimestamp: BigInt(Math.floor(Date.now() / 1000)),
+      path: path, // Add this line
     });
   }
 

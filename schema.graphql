@@ -19,6 +19,7 @@ type QuestStep @entity {
   filterCriteria: JSON
   requiredAmount: BigInt!
   includeTransaction: Boolean!
+  path: String
 }
 
 type UserQuestProgress
@@ -39,5 +40,6 @@ type StepProgress @entity {
   stepNumber: Int!
   progressAmount: BigInt!
   completed: Boolean! @index
-  startTimestamp: BigInt! # Added this line
+  startTimestamp: BigInt!
+  path: String # Add this line
 }
