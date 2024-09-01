@@ -1,4 +1,6 @@
+import { StoreWithCache } from "@belopash/typeorm-store";
 import { AbiEvent } from "@subsquid/evm-abi";
+import { BlockData } from "@subsquid/evm-processor";
 import {
   CHAINS,
   QUESTS_CONFIG,
@@ -6,42 +8,39 @@ import {
   QUEST_TYPE_INFO,
 } from "../constants";
 import { Quest, QuestStep, StepProgress, UserQuestProgress } from "../model";
-import { Context } from "./processorFactory";
+import { TaskQueue } from "../utils/queue";
+import { Context, ProcessorContext } from "./processorFactory";
 
-const MAX_BATCH_SIZE = 100 * 1024 * 1024; // 100 MB
+type MappingContext = ProcessorContext<StoreWithCache> & { queue: TaskQueue };
 
 export function createMain(chain: CHAINS) {
   return async (ctx: Context) => {
-    const quests: Map<string, Quest> = new Map();
-    const questSteps: Map<string, QuestStep> = new Map();
-
-    // Initialize quests and quest steps
-    initializeQuestsAndSteps(chain, quests, questSteps);
-
-    const questsArray = Array.from(quests.values());
-    const questStepsArray = Array.from(questSteps.values());
-
-    // Process blocks in smaller batches
-    for (
-      let batchStart = 0;
-      batchStart < ctx.blocks.length;
-      batchStart += MAX_BATCH_SIZE
-    ) {
-      const batchEnd = Math.min(batchStart + MAX_BATCH_SIZE, ctx.blocks.length);
-      const batch = ctx.blocks.slice(batchStart, batchEnd);
-
-      console.log(`Processing batch: ${batchStart} to ${batchEnd - 1}`);
-
-      await processBatch(ctx, batch, questsArray, questStepsArray);
-    }
-
-    // Save all entities at once after processing
-    await ctx.store.save(questsArray);
-    await ctx.store.save(questStepsArray);
+    return await mapBlocks(
+      {
+        ...ctx,
+        queue: new TaskQueue(),
+      },
+      chain
+    );
   };
 }
 
-function initializeQuestsAndSteps(
+async function mapBlocks(ctx: MappingContext, chain: CHAINS) {
+  const quests: Map<string, Quest> = new Map();
+  const questSteps: Map<string, QuestStep> = new Map();
+
+  scheduleInit(chain, quests, questSteps);
+
+  const questsArray = Array.from(quests.values());
+
+  for (const block of ctx.blocks) {
+    mapBlock(ctx, block, questsArray);
+  }
+
+  await ctx.queue.run();
+}
+
+function scheduleInit(
   chain: CHAINS,
   quests: Map<string, Quest>,
   questSteps: Map<string, QuestStep>
@@ -67,7 +66,7 @@ function initializeQuestsAndSteps(
       questStep.filterCriteria = stepConfig.filterCriteria;
       questStep.requiredAmount = stepConfig.requiredAmount || 1n;
       questStep.includeTransaction = stepConfig.includeTransaction || false;
-      questStep.path = stepConfig.path; // Add this line
+      questStep.path = stepConfig.path;
       quest.steps.push(questStep);
       questSteps.set(stepId, questStep);
     });
@@ -76,24 +75,14 @@ function initializeQuestsAndSteps(
   }
 }
 
-async function processBatch(
-  ctx: Context,
-  batch: typeof ctx.blocks,
-  questsArray: Quest[],
-  questStepsArray: QuestStep[]
-) {
-  const userProgressUpdates: Map<
-    string,
-    { quest: Quest; step: QuestStep; amount: bigint; path?: string }
-  > = new Map();
+function mapBlock(ctx: MappingContext, block: BlockData, questsArray: Quest[]) {
+  const currentTimestamp = Math.floor(block.header.timestamp / 1000);
 
-  for (let block of batch) {
-    const currentTimestamp = Math.floor(block.header.timestamp / 1000);
+  for (let log of block.logs) {
+    const logAddress = log.address.toLowerCase();
 
     for (let log of block.logs) {
       const logAddress = log.address.toLowerCase();
-      console.log(`Processing log for address: ${logAddress}`);
-
       const matchingQuests = questsArray.filter(
         (quest) =>
           quest.steps.some((step) => step.address === logAddress) &&
@@ -101,19 +90,9 @@ async function processBatch(
           (!quest.endTime || currentTimestamp <= quest.endTime)
       );
 
-      console.log(
-        `Matching quests: ${matchingQuests.map((q) => q.name).join(", ")}`
-      );
-
       for (const matchingQuest of matchingQuests) {
         const matchingSteps = matchingQuest.steps.filter(
           (step) => step.address === logAddress
-        );
-
-        console.log(
-          `Matching steps for quest ${matchingQuest.name}: ${matchingSteps
-            .map((s) => s.stepNumber)
-            .join(", ")}`
         );
 
         for (const matchingStep of matchingSteps) {
@@ -121,117 +100,132 @@ async function processBatch(
             QUEST_TYPE_INFO[matchingStep.type as QUEST_TYPES];
           const { abi, eventName } = questTypeInfo;
 
-          console.log(
-            `Checking event ${eventName} for step ${matchingStep.stepNumber}`
-          );
-
           if (abi.events && eventName in abi.events) {
             const event = abi.events[eventName] as AbiEvent<any>;
             if (event.is(log)) {
-              console.log(
-                `Event ${eventName} matched for step ${matchingStep.stepNumber}`
-              );
               const decodedLog = event.decode(log);
               const sender = matchingStep.includeTransaction
                 ? log.getTransaction().from
                 : undefined;
 
-              const processed = processQuestEvent(
+              handleQuestEvent(
+                ctx,
                 matchingQuest,
                 matchingStep,
                 decodedLog,
-                userProgressUpdates,
                 sender
               );
-
-              if (processed) {
-                console.log(
-                  `Processed event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-                );
-              } else {
-                console.log(
-                  `Failed to process event: ${eventName} for quest: ${matchingQuest.name}, step: ${matchingStep.stepNumber}`
-                );
-              }
-            } else {
-              console.log(
-                `Event ${eventName} did not match for step ${matchingStep.stepNumber}`
-              );
             }
-          } else {
-            console.log(
-              `Event ${eventName} not found in ABI for step ${matchingStep.stepNumber}`
-            );
           }
         }
       }
     }
   }
 
-  // Apply all user progress updates at once
-  for (const [userAddress, update] of userProgressUpdates) {
-    await updateUserQuestProgress(
-      ctx,
-      userAddress,
-      update.quest,
-      update.step,
-      update.amount,
-      update.path
-    );
-  }
-}
+  async function handleQuestEvent(
+    ctx: MappingContext,
+    quest: Quest,
+    step: QuestStep,
+    decodedLog: any,
+    sender?: string
+  ): Promise<void> {
+    if (step.filterCriteria) {
+      for (const [key, value] of Object.entries(step.filterCriteria)) {
+        let logValue = decodedLog[key];
+        let criteriaValue = value;
 
-function processQuestEvent(
-  quest: Quest,
-  step: QuestStep,
-  decodedLog: any,
-  userProgressUpdates: Map<
-    string,
-    { quest: Quest; step: QuestStep; amount: bigint; path?: string }
-  >,
-  sender?: string
-): boolean {
-  console.log(
-    `Processing event for quest: ${quest.name}, step: ${step.stepNumber}`
-  );
-  console.log(
-    `Decoded log:`,
-    JSON.stringify(decodedLog, (_, v) =>
-      typeof v === "bigint" ? v.toString() : v
-    )
-  );
+        if (typeof logValue === "bigint") {
+          logValue = logValue.toString();
+        }
+        if (typeof criteriaValue === "bigint") {
+          criteriaValue = criteriaValue.toString();
+        }
 
-  if (step.filterCriteria) {
-    for (const [key, value] of Object.entries(step.filterCriteria)) {
-      let logValue = decodedLog[key];
-      let criteriaValue = value;
-
-      // Convert BigInt to string for comparison
-      if (typeof logValue === "bigint") {
-        logValue = logValue.toString();
-      }
-      if (typeof criteriaValue === "bigint") {
-        criteriaValue = criteriaValue.toString();
-      }
-
-      if (logValue.toLowerCase() !== criteriaValue.toLowerCase()) {
-        console.log(
-          `Filter criteria not met for key ${key}. Expected: ${criteriaValue}, Got: ${logValue}`
-        );
-        return false;
+        if (logValue.toLowerCase() !== criteriaValue.toLowerCase()) {
+          return;
+        }
       }
     }
+
+    const { userAddress, amount } = getUserAddressAndAmount(
+      step.type as QUEST_TYPES,
+      decodedLog,
+      sender
+    );
+
+    if (!userAddress) {
+      return;
+    }
+
+    const userQuestProgressId = `${userAddress}-${quest.id}`;
+    const stepProgressId = `${userQuestProgressId}-step-${step.stepNumber}`;
+
+    const userQuestProgressDeferred = ctx.store.defer(
+      UserQuestProgress,
+      userQuestProgressId
+    );
+    const stepProgressDeferred = ctx.store.defer(StepProgress, stepProgressId);
+
+    ctx.queue.add(async () => {
+      const userQuestProgress = await userQuestProgressDeferred.getOrInsert(
+        (id) => {
+          quest.totalParticipants += 1;
+          return new UserQuestProgress({
+            id,
+            address: userAddress,
+            quest,
+            completedSteps: 0,
+            completed: false,
+          });
+        }
+      );
+
+      const stepProgress = await stepProgressDeferred.getOrInsert((id) => {
+        return new StepProgress({
+          id: stepProgressId,
+          userQuestProgress,
+          stepNumber: step.stepNumber,
+          progressAmount: 0n,
+          completed: false,
+          startTimestamp: BigInt(Math.floor(Date.now() / 1000)),
+          path: step.path,
+        });
+      });
+
+      stepProgress.progressAmount += amount;
+
+      if (
+        stepProgress.progressAmount >= step.requiredAmount &&
+        !stepProgress.completed
+      ) {
+        stepProgress.completed = true;
+        userQuestProgress.completedSteps += 1;
+
+        if (userQuestProgress.completedSteps === quest.steps.length) {
+          userQuestProgress.completed = true;
+          quest.totalCompletions += 1;
+        }
+      }
+
+      await ctx.store.upsert(quest);
+      await ctx.store.upsert(userQuestProgress);
+      await ctx.store.upsert(stepProgress);
+    });
   }
 
-  let userAddress: string;
-  let amount: bigint = 1n;
+  function getUserAddressAndAmount(
+    questType: QUEST_TYPES,
+    decodedLog: any,
+    sender?: string
+  ): { userAddress: string | null; amount: bigint } {
+    let userAddress: string | null = null;
+    let amount: bigint = 1n;
 
-  try {
-    switch (step.type) {
+    switch (questType) {
       case QUEST_TYPES.ERC721_MINT:
       case QUEST_TYPES.ERC20_MINT:
         userAddress = decodedLog.to.toLowerCase();
-        if (step.type === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
+        if (questType === QUEST_TYPES.ERC20_MINT) amount = decodedLog.value;
         break;
       case QUEST_TYPES.UNISWAP_MINT:
         userAddress = sender?.toLowerCase() || "";
@@ -271,96 +265,9 @@ function processQuestEvent(
         userAddress = decodedLog.depositer.toLowerCase();
         break;
       default:
-        console.log(`Unsupported quest type: ${step.type}`);
-        return false;
+        return { userAddress: null, amount: 0n };
     }
 
-    console.log(
-      `Processed event. User: ${userAddress}, Amount: ${amount.toString()}`
-    );
-
-    // Use only the userAddress as the key
-    const key = userAddress;
-    const existingUpdate = userProgressUpdates.get(key);
-    if (existingUpdate) {
-      existingUpdate.amount += amount;
-    } else {
-      userProgressUpdates.set(key, {
-        quest,
-        step,
-        amount,
-        path: step.path || undefined,
-      });
-    }
-
-    return true;
-  } catch (error) {
-    console.error(
-      `Error processing event for quest: ${quest.name}, step: ${step.stepNumber}`,
-      error
-    );
-    return false;
+    return { userAddress, amount };
   }
-}
-
-async function updateUserQuestProgress(
-  ctx: Context,
-  userAddress: string,
-  quest: Quest,
-  completedStep: QuestStep,
-  amount: bigint,
-  path?: string
-) {
-  // Use only the userAddress to create the userQuestProgressId
-  const userQuestProgressId = `${userAddress}-${quest.id}`;
-  let userQuestProgress = await ctx.store.get(
-    UserQuestProgress,
-    userQuestProgressId
-  );
-
-  if (!userQuestProgress) {
-    userQuestProgress = new UserQuestProgress({
-      id: userQuestProgressId,
-      address: userAddress, // This is correct, using only the userAddress
-      quest,
-      completedSteps: 0,
-      completed: false,
-    });
-    quest.totalParticipants += 1;
-  }
-
-  const stepProgressId = `${userQuestProgressId}-step-${completedStep.stepNumber}`;
-  let stepProgress = await ctx.store.get(StepProgress, stepProgressId);
-
-  if (!stepProgress) {
-    stepProgress = new StepProgress({
-      id: stepProgressId,
-      userQuestProgress,
-      stepNumber: completedStep.stepNumber,
-      progressAmount: 0n,
-      completed: false,
-      startTimestamp: BigInt(Math.floor(Date.now() / 1000)),
-      path: path, // Add this line
-    });
-  }
-
-  stepProgress.progressAmount += amount;
-
-  if (
-    stepProgress.progressAmount >= completedStep.requiredAmount &&
-    !stepProgress.completed
-  ) {
-    stepProgress.completed = true;
-    userQuestProgress.completedSteps += 1;
-
-    if (userQuestProgress.completedSteps === quest.steps.length) {
-      userQuestProgress.completed = true;
-      quest.totalCompletions += 1;
-    }
-  }
-
-  // Save entities separately to avoid the "mass saving allowed only for entities of the same class" error
-  await ctx.store.save(quest);
-  await ctx.store.save(userQuestProgress);
-  await ctx.store.save(stepProgress);
 }

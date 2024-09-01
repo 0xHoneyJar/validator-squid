@@ -17,6 +17,40 @@ import * as uniswapAbi from "./abi/uniswap";
 
 const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
+export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
+export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
+export const EGGS_ADDRESS = "0x30b8c95a6e7170a1322453b47722f10fea185b0f";
+export const HOOKED_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
+export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
+export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
+export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
+export const MYSTERY_BOX_ADDRESS = "0xBB7B805B257d7C76CA9435B3ffe780355E4C4B17";
+export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
+export const KODIAK_POOL_ADDRESS = "0xF331ABFfE9cB2b966Ab4C102ee268f4e1ad8e24b";
+export const BGT_ADDRESS = "0xbDa130737BDd9618301681329bF2e46A016ff9Ad";
+// HONEY-WBERA Rewards Vault
+export const REWARDS_VAULT_ADDRESS =
+  "0xAD57d7d39a487C04a44D3522b910421888Fb9C6d";
+export const THJ_VALIDATOR_ADDRESS =
+  "0x40495A781095932e2FC8dccA69F5e358711Fdd41";
+export const HONEY_SITE_ADDRESS = "0x491e1d15f2a78799520937c02bb03a952140ac46";
+// DIRAC Vaults
+export const IBGT_DIRAC_VAULT_ADDRESS =
+  "0x50bd749123A06F6a951AcE3C21E6d565176dCd7A";
+export const NECT_DIRAC_VAULT_ADDRESS =
+  "0xd5491A22D05092BDC388af8b8b69d58c2f5cc4Bc";
+export const ZERU_LENDING_POOL = "0x989C7646B7F3f351E00f3e231247993C7e8C8CA2";
+export const ZERU_STRATEGIES_CONTROLLER =
+  "0x744E7099cb4070f9EC4108fC6fAFe9858ac94d79";
+export const HONEY_ADDRESS = "0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03";
+export const WBERA_ADDRESS = "0x7507c1dc16935B82698e4C63f2746A2fCf994dF8";
+export const TPOT_FAUCET_ADDRESS = "0xfc5e3743E9FAC8BB60408797607352E24Db7d65E";
+export const HONEYPOT_POT_ADDRESS =
+  "0x93f8beabd145a61067ef2fca38c4c9c31d47ab7e";
+export const HONEYPOT_JANI_ADDRESS =
+  "0x2c504e661750e03aa9252c67e771dc059a521863";
+export const BRUUVVPRINT_ADDRESS = "0xe93435C4FD05A566f4EB20e1fCbbb83F95886e08";
+
 export enum CHAINS {
   BASE = "base",
   ARBITRUM = "arbitrum",
@@ -85,7 +119,7 @@ type AbiWithEvents = {
 
 export const QUEST_TYPE_INFO: Record<
   QUEST_TYPES,
-  { eventName: string; abi: AbiWithEvents }
+  { eventName: string; abi: AbiWithEvents; topic1?: string; topic2?: string }
 > = {
   [QUEST_TYPES.ERC721_MINT]: {
     eventName: "Transfer",
@@ -118,6 +152,7 @@ export const QUEST_TYPE_INFO: Record<
   [QUEST_TYPES.DELEGATE]: {
     eventName: "ActivateBoost",
     abi: bgtAbi as AbiWithEvents,
+    topic2: THJ_VALIDATOR_ADDRESS,
   },
   [QUEST_TYPES.STAKE]: {
     eventName: "Staked",
@@ -130,6 +165,7 @@ export const QUEST_TYPE_INFO: Record<
   [QUEST_TYPES.DIRAC_DEPOSIT]: {
     eventName: "Deposit",
     abi: diracVaultAbi as AbiWithEvents,
+    topic1: THJ_VALIDATOR_ADDRESS,
   },
   [QUEST_TYPES.ZERU_DEPOSIT]: {
     eventName: "Deposit",
@@ -167,40 +203,6 @@ export const MISSION_TYPE_INFO: Record<
   },
 };
 
-export const APICULTURE_ADDRESS = "0x6cfb9280767a3596ee6af887d900014a755ffc75";
-export const BULLAS_ADDRESS = "0x98F6b7Db312dD276b9a7bD08e3937e68e662202C";
-export const EGGS_ADDRESS = "0x30b8c95a6e7170a1322453b47722f10fea185b0f";
-export const HOOKED_ADDRESS = "0xa79dd1ca7197fe48352d75984f02cb20e259f14b";
-export const ZORB_ADDRESS = "0x295a70b5681069f6d37ea7ce696015c3698bb2fb";
-export const HOOK_VAULT_ADDRESS = "0xB39DF6BBB1Cf2B609DeE43F109caFEFF1A7CCBEa";
-export const BOOGA_BEARS_ADDRESS = "0x6Ba79f573EdFE305e7Dbd79902BC69436e197834";
-export const MYSTERY_BOX_ADDRESS = "0xBB7B805B257d7C76CA9435B3ffe780355E4C4B17";
-export const STDV4TNT_ADDRESS = "0x355bb949d80331516Fc7F4CF81229021187d67d2";
-export const KODIAK_POOL_ADDRESS = "0xF331ABFfE9cB2b966Ab4C102ee268f4e1ad8e24b";
-export const BGT_ADDRESS = "0xbDa130737BDd9618301681329bF2e46A016ff9Ad";
-// HONEY-WBERA Rewards Vault
-export const REWARDS_VAULT_ADDRESS =
-  "0xAD57d7d39a487C04a44D3522b910421888Fb9C6d";
-export const THJ_VALIDATOR_ADDRESS =
-  "0x40495A781095932e2FC8dccA69F5e358711Fdd41";
-export const HONEY_SITE_ADDRESS = "0x491e1d15f2a78799520937c02bb03a952140ac46";
-// DIRAC Vaults
-export const IBGT_DIRAC_VAULT_ADDRESS =
-  "0x50bd749123A06F6a951AcE3C21E6d565176dCd7A";
-export const NECT_DIRAC_VAULT_ADDRESS =
-  "0xd5491A22D05092BDC388af8b8b69d58c2f5cc4Bc";
-export const ZERU_LENDING_POOL = "0x989C7646B7F3f351E00f3e231247993C7e8C8CA2";
-export const ZERU_STRATEGIES_CONTROLLER =
-  "0x744E7099cb4070f9EC4108fC6fAFe9858ac94d79";
-export const HONEY_ADDRESS = "0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03";
-export const WBERA_ADDRESS = "0x7507c1dc16935B82698e4C63f2746A2fCf994dF8";
-// HoneyPot
-export const TPOT_FAUCET_ADDRESS = "0xfc5e3743E9FAC8BB60408797607352E24Db7d65E";
-export const HONEYPOT_POT_ADDRESS =
-  "0x93f8beabd145a61067ef2fca38c4c9c31d47ab7e";
-export const HONEYPOT_JANI_ADDRESS =
-  "0x2c504e661750e03aa9252c67e771dc059a521863";
-
 type QuestStepConfig = {
   readonly type: QUEST_TYPES;
   readonly address: string;
@@ -231,6 +233,14 @@ type MissionConfig = {
 
 export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
   [CHAINS.BERACHAIN]: {
+    [QUESTS.BRUUVVPRINT]: {
+      steps: [
+        {
+          type: QUEST_TYPES.MEMESWAP_DEPLOY,
+          address: BRUUVVPRINT_ADDRESS,
+        },
+      ],
+    },
     [QUESTS.JANI_VS_POT]: {
       steps: [
         {
@@ -288,32 +298,32 @@ export const QUESTS_CONFIG: Record<string, Record<string, QuestConfig>> = {
       startTime: 1724367186,
       endTime: 1725480000,
     },
-    [QUESTS.STAKOOOR]: {
-      steps: [
-        {
-          type: QUEST_TYPES.STAKE,
-          address: REWARDS_VAULT_ADDRESS,
-        },
-      ],
-      startTime: 1722183600,
-    },
-    [QUESTS.DELEGATOOOR]: {
-      steps: [
-        {
-          type: QUEST_TYPES.CLAIM_BGT_REWARD,
-          address: REWARDS_VAULT_ADDRESS,
-        },
-        {
-          type: QUEST_TYPES.DELEGATE,
-          address: BGT_ADDRESS,
-          filterCriteria: {
-            validator: THJ_VALIDATOR_ADDRESS,
-          },
-          requiredAmount: parseEther("1"),
-        },
-      ],
-      startTime: 1722183600,
-    },
+    // [QUESTS.STAKOOOR]: {
+    //   steps: [
+    //     {
+    //       type: QUEST_TYPES.STAKE,
+    //       address: REWARDS_VAULT_ADDRESS,
+    //     },
+    //   ],
+    //   startTime: 1722183600,
+    // },
+    // [QUESTS.DELEGATOOOR]: {
+    //   steps: [
+    //     {
+    //       type: QUEST_TYPES.CLAIM_BGT_REWARD,
+    //       address: REWARDS_VAULT_ADDRESS,
+    //     },
+    //     {
+    //       type: QUEST_TYPES.DELEGATE,
+    //       address: BGT_ADDRESS,
+    //       filterCriteria: {
+    //         validator: THJ_VALIDATOR_ADDRESS,
+    //       },
+    //       requiredAmount: parseEther("1"),
+    //     },
+    //   ],
+    //   startTime: 1722183600,
+    // },
     [QUESTS.RUN_IT_BACK_TURBO]: {
       steps: [
         {

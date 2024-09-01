@@ -1,12 +1,12 @@
-module.exports = class Data1724109809662 {
-    name = 'Data1724109809662'
+module.exports = class Data1725049067832 {
+    name = 'Data1725049067832'
 
     async up(db) {
-        await db.query(`CREATE TABLE "quest_step" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "type" text NOT NULL, "address" text NOT NULL, "token_id" numeric, "filter_criteria" jsonb, "required_amount" numeric NOT NULL, "include_transaction" boolean NOT NULL, "quest_id" character varying, CONSTRAINT "PK_2701eac9024314902255b9efaf7" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "quest_step" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "type" text NOT NULL, "address" text NOT NULL, "token_id" numeric, "filter_criteria" jsonb, "required_amount" numeric NOT NULL, "include_transaction" boolean NOT NULL, "path" text, "quest_id" character varying, CONSTRAINT "PK_2701eac9024314902255b9efaf7" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_9dc3e0b37118e6c7035a54d9d9" ON "quest_step" ("quest_id") `)
         await db.query(`CREATE TABLE "quest" ("id" character varying NOT NULL, "name" text NOT NULL, "chain" text NOT NULL, "start_time" integer, "end_time" integer, "total_participants" integer NOT NULL, "total_completions" integer NOT NULL, CONSTRAINT "PK_0d6873502a58302d2ae0b82631c" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_27eab628270ea2fa9e514693e4" ON "quest" ("name") `)
-        await db.query(`CREATE TABLE "step_progress" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "progress_amount" numeric NOT NULL, "completed" boolean NOT NULL, "start_timestamp" numeric NOT NULL, "user_quest_progress_id" character varying, CONSTRAINT "PK_4a0d11758626d75e36814ab7459" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "step_progress" ("id" character varying NOT NULL, "step_number" integer NOT NULL, "progress_amount" numeric NOT NULL, "completed" boolean NOT NULL, "start_timestamp" numeric NOT NULL, "path" text, "user_quest_progress_id" character varying, CONSTRAINT "PK_4a0d11758626d75e36814ab7459" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_e63392ab41383a0cdcf2bde6db" ON "step_progress" ("user_quest_progress_id") `)
         await db.query(`CREATE INDEX "IDX_ae3bbcff9897255d9a3029acd4" ON "step_progress" ("completed") `)
         await db.query(`CREATE TABLE "user_quest_progress" ("id" character varying NOT NULL, "address" text NOT NULL, "completed_steps" integer NOT NULL, "completed" boolean NOT NULL, "quest_id" character varying, CONSTRAINT "PK_201dda0520db698521cb9cbfda6" PRIMARY KEY ("id"))`)

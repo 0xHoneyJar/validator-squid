@@ -1,6 +1,6 @@
 manifestVersion: subsquid.io/v0.1
 name: quest-squid
-version: 21
+version: 24
 description: A squid that indexes quest events for Cub Scouts
 build:
 deploy:
@@ -16,14 +16,14 @@ deploy:
       - optimism.http
       - base.http
   processor:
-    - name: arb-processor
-      cmd:
-        - sqd
-        - process:prod:arb
     - name: berachain-processor
       cmd:
         - sqd
         - process:prod:bera
+    - name: arb-processor
+      cmd:
+        - sqd
+        - process:prod:arb
     - name: optimism-processor
       cmd:
         - sqd
@@ -42,3 +42,6 @@ deploy:
       - serve:prod
 scale:
   dedicated: true
+  addons:
+    postgres:
+      profile: medium
