@@ -1,45 +1,18 @@
-type Quest @entity {
+type Vault @entity {
   id: ID!
-  name: String! @index
-  chain: String!
-  steps: [QuestStep!]! @derivedFrom(field: "quest")
-  startTime: Int
-  endTime: Int
-  totalParticipants: Int!
-  totalCompletions: Int!
-}
-
-type QuestStep @entity {
-  id: ID!
-  quest: Quest!
-  stepNumber: Int!
-  type: String!
-  address: String!
-  tokenId: BigInt
-  filterCriteria: JSON
-  requiredAmount: BigInt!
-  includeTransaction: Boolean!
-  path: String
-}
-
-type UserQuestProgress
-  @entity
-  @index(fields: ["id", "address"])
-  @index(fields: ["id", "completed"]) {
-  id: ID! @index
   address: String! @index
-  quest: Quest!
-  completedSteps: Int!
-  completed: Boolean! @index
-  stepProgresses: [StepProgress!]! @derivedFrom(field: "userQuestProgress")
+  stakingToken: String! @index
+  createdAt: BigInt!
+  incentives: [Incentive!]! @derivedFrom(field: "vault")
 }
 
-type StepProgress @entity {
+type Incentive @entity {
   id: ID!
-  userQuestProgress: UserQuestProgress!
-  stepNumber: Int!
-  progressAmount: BigInt!
-  completed: Boolean! @index
-  startTimestamp: BigInt!
-  path: String # Add this line
+  vault: Vault!
+  token: String! @index
+  active: Boolean!
+  amount: BigInt!
+  incentiveRate: BigInt!
+  addedAt: BigInt!
+  removedAt: BigInt
 }

@@ -8,50 +8,16 @@ import {
   Transaction as _Transaction,
 } from "@subsquid/evm-processor";
 import { assertNotNull } from "@subsquid/util-internal";
+import * as rewardsVaultFactoryAbi from "../abi/berachainRewardsVaultFactory";
+import * as rewardsVaultAbi from "../abi/rewardsVault";
 import {
   ARCHIVE_GATEWAYS,
   BLOCK_RANGES,
   CHAINS,
-  QUESTS_CONFIG,
-  QUEST_TYPES,
-  QUEST_TYPE_INFO,
   RPC_ENDPOINTS,
 } from "../constants";
 
 export function createProcessor(chain: CHAINS) {
-  const questConfig = QUESTS_CONFIG[chain];
-  const addressToTopics: Record<
-    string,
-    { topic0: string[]; topic1?: string; topic2?: string }
-  > = {};
-
-  // Collect relevant addresses and topics
-  for (const quest of Object.values(questConfig)) {
-    for (const step of quest.steps) {
-      const address = step.address.toLowerCase();
-      if (!addressToTopics[address]) {
-        addressToTopics[address] = { topic0: [] };
-      }
-
-      const questTypeInfo = QUEST_TYPE_INFO[step.type as QUEST_TYPES];
-      const topic0 = questTypeInfo.abi.events[questTypeInfo.eventName].topic;
-
-      if (!addressToTopics[address].topic0.includes(topic0)) {
-        addressToTopics[address].topic0.push(topic0);
-      }
-
-      if (questTypeInfo.topic1) {
-        addressToTopics[address].topic1 = questTypeInfo.topic1;
-      }
-
-      if (questTypeInfo.topic2) {
-        addressToTopics[address].topic2 = questTypeInfo.topic2;
-      }
-
-      console.log(`Added topic ${topic0} for address ${address}`);
-    }
-  }
-
   const processor = new EvmBatchProcessor()
     .setGateway(ARCHIVE_GATEWAYS[chain])
     .setRpcEndpoint({
@@ -63,23 +29,17 @@ export function createProcessor(chain: CHAINS) {
         transactionHash: true,
       },
     })
-    .setBlockRange({ from: BLOCK_RANGES[chain].from });
-
-  // Add logs for each address with all its topics
-  for (const [address, topics] of Object.entries(addressToTopics)) {
-    processor.addLog({
-      address: [address],
-      topic0: topics.topic0,
-      topic1: topics.topic1 ? [topics.topic1] : undefined,
-      topic2: topics.topic2 ? [topics.topic2] : undefined,
-      transaction: true, // Include transaction for all logs to be safe
+    .setBlockRange({ from: BLOCK_RANGES[chain].from })
+    .addLog({
+      address: ["0x2B6e40f65D82A0cB98795bC7587a71bfa49fBB2B"],
+      topic0: [rewardsVaultFactoryAbi.events.VaultCreated.topic],
+    })
+    .addLog({
+      topic0: [
+        rewardsVaultAbi.events.IncentiveAdded.topic,
+        rewardsVaultAbi.events.IncentiveTokenRemoved.topic,
+      ],
     });
-    console.log(
-      `Processor listening for address ${address} with topics: ${topics.topic0.join(
-        ", "
-      )}${topics.topic1 ? ` and topic1: ${topics.topic1}` : ""}`
-    );
-  }
 
   return processor;
 }

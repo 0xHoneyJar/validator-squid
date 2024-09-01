@@ -1,47 +1,31 @@
 manifestVersion: subsquid.io/v0.1
-name: quest-squid
-version: 24
-description: A squid that indexes quest events for Cub Scouts
+name: validator-squid
+version: 1
+description: A squid that indexes quest events for VaaS
 build:
 deploy:
   env:
-    RPC_ZORA_HTTP: ${{ secrets.RPC_ZORA_HTTP }}
+    # RPC_ZORA_HTTP: ${{ secrets.RPC_ZORA_HTTP }}
     RPC_BERA_HTTP: ${{ secrets.RPC_BERA_HTTP }}
     # SQD_DEBUG: ${{ secrets.SQD_DEBUG }}
   addons:
     postgres:
-    rpc:
-      - arbitrum-one.http
-      # - berachain.http
-      - optimism.http
-      - base.http
+    # rpc:
+    # - arbitrum-one.http
+    # - berachain.http
+    # - optimism.http
+    # - base.http
   processor:
     - name: berachain-processor
       cmd:
         - sqd
         - process:prod:bera
-    - name: arb-processor
-      cmd:
-        - sqd
-        - process:prod:arb
-    - name: optimism-processor
-      cmd:
-        - sqd
-        - process:prod:op
-    - name: base-processor
-      cmd:
-        - sqd
-        - process:prod:base
-    - name: zora-processor
-      cmd:
-        - sqd
-        - process:prod:zora
   api:
     cmd:
       - sqd
       - serve:prod
 scale:
   dedicated: true
-  addons:
-    postgres:
-      profile: medium
+  # addons:
+  #   postgres:
+  #     profile: medium
